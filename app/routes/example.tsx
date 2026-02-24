@@ -1,6 +1,6 @@
 import type { Route } from './+types/example';
 
-export function meta({ }: Route.MetaArgs) {
+export function meta({}: Route.MetaArgs) {
   return [
     { title: 'Example Page' },
     { name: 'description', content: 'Welcome to the example page.' },
