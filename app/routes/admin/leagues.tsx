@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -454,46 +455,58 @@ export default function LeaguesPage() {
               createMutation.mutate();
             }}
           >
-            <NativeSelect
-              value={seasonId}
-              onChange={(event) => setSeasonId(event.target.value)}
-              disabled={createMutation.isPending}
-            >
-              {(seasonsQuery.data ?? []).map((season) => (
-                <NativeSelectOption key={season.id} value={season.id}>
-                  {season.year} - {season.name}
+            <div className="space-y-1">
+              <Label htmlFor="league-season">Season</Label>
+              <NativeSelect
+                id="league-season"
+                value={seasonId}
+                onChange={(event) => setSeasonId(event.target.value)}
+                disabled={createMutation.isPending}
+              >
+                {(seasonsQuery.data ?? []).map((season) => (
+                  <NativeSelectOption key={season.id} value={season.id}>
+                    {season.year} - {season.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {createErrors.seasonId ? (
+                <p className="text-destructive text-xs">
+                  {createErrors.seasonId}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="league-name">League Name</Label>
+              <Input
+                id="league-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="League name"
+                disabled={createMutation.isPending}
+              />
+              {createErrors.name ? (
+                <p className="text-destructive text-xs">{createErrors.name}</p>
+              ) : null}
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="league-mode">League Mode</Label>
+              <NativeSelect
+                id="league-mode"
+                value={mode}
+                onChange={(event) => setMode(event.target.value as LeagueMode)}
+                disabled={createMutation.isPending}
+              >
+                <NativeSelectOption value="overall">Overall</NativeSelectOption>
+                <NativeSelectOption value="head_to_head">
+                  Head-to-head
                 </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            {createErrors.seasonId ? (
-              <p className="text-destructive text-xs">
-                {createErrors.seasonId}
-              </p>
-            ) : null}
-
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="League name"
-              disabled={createMutation.isPending}
-            />
-            {createErrors.name ? (
-              <p className="text-destructive text-xs">{createErrors.name}</p>
-            ) : null}
-
-            <NativeSelect
-              value={mode}
-              onChange={(event) => setMode(event.target.value as LeagueMode)}
-              disabled={createMutation.isPending}
-            >
-              <NativeSelectOption value="overall">Overall</NativeSelectOption>
-              <NativeSelectOption value="head_to_head">
-                Head-to-head
-              </NativeSelectOption>
-            </NativeSelect>
-            {createErrors.mode ? (
-              <p className="text-destructive text-xs">{createErrors.mode}</p>
-            ) : null}
+              </NativeSelect>
+              {createErrors.mode ? (
+                <p className="text-destructive text-xs">{createErrors.mode}</p>
+              ) : null}
+            </div>
 
             {createFormError ? (
               <p className="text-destructive text-xs">{createFormError}</p>
@@ -539,24 +552,32 @@ export default function LeaguesPage() {
               tieBreakerMutation.mutate();
             }}
           >
-            <NativeSelect
-              value={selectedLeagueId}
-              onChange={(event) => setSelectedLeagueId(event.target.value)}
-              disabled={tieBreakerMutation.isPending}
-            >
-              {(leaguesQuery.data ?? []).map((league) => (
-                <NativeSelectOption key={league.id} value={league.id}>
-                  {league.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <div className="space-y-1">
+              <Label htmlFor="tie-breaker-league">League</Label>
+              <NativeSelect
+                id="tie-breaker-league"
+                value={selectedLeagueId}
+                onChange={(event) => setSelectedLeagueId(event.target.value)}
+                disabled={tieBreakerMutation.isPending}
+              >
+                {(leaguesQuery.data ?? []).map((league) => (
+                  <NativeSelectOption key={league.id} value={league.id}>
+                    {league.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </div>
 
-            <Input
-              value={tieBreakersInput}
-              onChange={(event) => setTieBreakersInput(event.target.value)}
-              placeholder="highest_player_score, match_dominance"
-              disabled={tieBreakerMutation.isPending}
-            />
+            <div className="space-y-1">
+              <Label htmlFor="tie-breakers">Tie-breakers</Label>
+              <Input
+                id="tie-breakers"
+                value={tieBreakersInput}
+                onChange={(event) => setTieBreakersInput(event.target.value)}
+                placeholder="highest_player_score, match_dominance"
+                disabled={tieBreakerMutation.isPending}
+              />
+            </div>
 
             {tieBreakerError ? (
               <p className="text-destructive text-xs">{tieBreakerError}</p>

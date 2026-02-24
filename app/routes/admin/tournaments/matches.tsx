@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -735,42 +736,66 @@ export default function MatchesPage() {
             }}
           >
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                value={set1A}
-                onChange={(event) => setSet1A(event.target.value)}
-                placeholder="Set 1 A"
-                disabled={isAnyPending}
-              />
-              <Input
-                value={set1B}
-                onChange={(event) => setSet1B(event.target.value)}
-                placeholder="Set 1 B"
-                disabled={isAnyPending}
-              />
-              <Input
-                value={set2A}
-                onChange={(event) => setSet2A(event.target.value)}
-                placeholder="Set 2 A"
-                disabled={isAnyPending}
-              />
-              <Input
-                value={set2B}
-                onChange={(event) => setSet2B(event.target.value)}
-                placeholder="Set 2 B"
-                disabled={isAnyPending}
-              />
-              <Input
-                value={set3A}
-                onChange={(event) => setSet3A(event.target.value)}
-                placeholder="Set 3 A (optional)"
-                disabled={isAnyPending}
-              />
-              <Input
-                value={set3B}
-                onChange={(event) => setSet3B(event.target.value)}
-                placeholder="Set 3 B (optional)"
-                disabled={isAnyPending}
-              />
+              <div className="space-y-1">
+                <Label htmlFor="match-score-set1a">Set 1 A</Label>
+                <Input
+                  id="match-score-set1a"
+                  value={set1A}
+                  onChange={(event) => setSet1A(event.target.value)}
+                  placeholder="Set 1 A"
+                  disabled={isAnyPending}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="match-score-set1b">Set 1 B</Label>
+                <Input
+                  id="match-score-set1b"
+                  value={set1B}
+                  onChange={(event) => setSet1B(event.target.value)}
+                  placeholder="Set 1 B"
+                  disabled={isAnyPending}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="match-score-set2a">Set 2 A</Label>
+                <Input
+                  id="match-score-set2a"
+                  value={set2A}
+                  onChange={(event) => setSet2A(event.target.value)}
+                  placeholder="Set 2 A"
+                  disabled={isAnyPending}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="match-score-set2b">Set 2 B</Label>
+                <Input
+                  id="match-score-set2b"
+                  value={set2B}
+                  onChange={(event) => setSet2B(event.target.value)}
+                  placeholder="Set 2 B"
+                  disabled={isAnyPending}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="match-score-set3a">Set 3 A (Optional)</Label>
+                <Input
+                  id="match-score-set3a"
+                  value={set3A}
+                  onChange={(event) => setSet3A(event.target.value)}
+                  placeholder="Set 3 A (optional)"
+                  disabled={isAnyPending}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="match-score-set3b">Set 3 B (Optional)</Label>
+                <Input
+                  id="match-score-set3b"
+                  value={set3B}
+                  onChange={(event) => setSet3B(event.target.value)}
+                  placeholder="Set 3 B (optional)"
+                  disabled={isAnyPending}
+                />
+              </div>
             </div>
 
             {Object.values(scoreErrors).length > 0 ? (

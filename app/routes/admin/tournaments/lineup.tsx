@@ -11,6 +11,7 @@ import { StatusChip } from "~/components/blocks/status-chip";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -224,35 +225,51 @@ export default function LineupPolicyPage() {
               saveMutation.mutate();
             }}
           >
-            <Input
-              value={rosterSize}
-              onChange={(event) => setRosterSize(event.target.value)}
-              placeholder="Roster size"
-              disabled={saveMutation.isPending || isLocked}
-            />
-            {errors.rosterSize ? (
-              <p className="text-destructive text-xs">{errors.rosterSize}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="lineup-roster-size">Roster Size</Label>
+              <Input
+                id="lineup-roster-size"
+                value={rosterSize}
+                onChange={(event) => setRosterSize(event.target.value)}
+                placeholder="Roster size"
+                disabled={saveMutation.isPending || isLocked}
+              />
+              {errors.rosterSize ? (
+                <p className="text-destructive text-xs">{errors.rosterSize}</p>
+              ) : null}
+            </div>
 
-            <Input
-              value={starterCount}
-              onChange={(event) => setStarterCount(event.target.value)}
-              placeholder="Starters"
-              disabled={saveMutation.isPending || isLocked}
-            />
-            {errors.starterCount ? (
-              <p className="text-destructive text-xs">{errors.starterCount}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="lineup-starter-count">Starter Count</Label>
+              <Input
+                id="lineup-starter-count"
+                value={starterCount}
+                onChange={(event) => setStarterCount(event.target.value)}
+                placeholder="Starters"
+                disabled={saveMutation.isPending || isLocked}
+              />
+              {errors.starterCount ? (
+                <p className="text-destructive text-xs">
+                  {errors.starterCount}
+                </p>
+              ) : null}
+            </div>
 
-            <Input
-              value={reserveCount}
-              onChange={(event) => setReserveCount(event.target.value)}
-              placeholder="Reserves"
-              disabled={saveMutation.isPending || isLocked}
-            />
-            {errors.reserveCount ? (
-              <p className="text-destructive text-xs">{errors.reserveCount}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="lineup-reserve-count">Reserve Count</Label>
+              <Input
+                id="lineup-reserve-count"
+                value={reserveCount}
+                onChange={(event) => setReserveCount(event.target.value)}
+                placeholder="Reserves"
+                disabled={saveMutation.isPending || isLocked}
+              />
+              {errors.reserveCount ? (
+                <p className="text-destructive text-xs">
+                  {errors.reserveCount}
+                </p>
+              ) : null}
+            </div>
 
             <DateTimePickerField
               label="Lineup Lock Timestamp"

@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -349,30 +350,38 @@ export default function EntryListPage() {
               });
             }}
           >
-            <NativeSelect
-              value={entryStatus}
-              onChange={(event) =>
-                setEntryStatus(event.target.value as EntryStatus)
-              }
-              disabled={updateMutation.isPending || isEntryListLocked}
-            >
-              <NativeSelectOption value="pool">Pool</NativeSelectOption>
-              <NativeSelectOption value="qualification">
-                Qualification
-              </NativeSelectOption>
-              <NativeSelectOption value="reserve">Reserve</NativeSelectOption>
-            </NativeSelect>
+            <div className="space-y-1">
+              <Label htmlFor="entry-status">Entry Status</Label>
+              <NativeSelect
+                id="entry-status"
+                value={entryStatus}
+                onChange={(event) =>
+                  setEntryStatus(event.target.value as EntryStatus)
+                }
+                disabled={updateMutation.isPending || isEntryListLocked}
+              >
+                <NativeSelectOption value="pool">Pool</NativeSelectOption>
+                <NativeSelectOption value="qualification">
+                  Qualification
+                </NativeSelectOption>
+                <NativeSelectOption value="reserve">Reserve</NativeSelectOption>
+              </NativeSelect>
+            </div>
 
-            <Input
-              value={reserveOrder}
-              onChange={(event) => setReserveOrder(event.target.value)}
-              placeholder="Reserve order"
-              disabled={
-                updateMutation.isPending ||
-                isEntryListLocked ||
-                entryStatus !== "reserve"
-              }
-            />
+            <div className="space-y-1">
+              <Label htmlFor="entry-reserve-order">Reserve Order</Label>
+              <Input
+                id="entry-reserve-order"
+                value={reserveOrder}
+                onChange={(event) => setReserveOrder(event.target.value)}
+                placeholder="Reserve order"
+                disabled={
+                  updateMutation.isPending ||
+                  isEntryListLocked ||
+                  entryStatus !== "reserve"
+                }
+              />
+            </div>
 
             {editFormError ? (
               <p className="text-destructive text-xs">{editFormError}</p>

@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 import type { WalletPack } from "~/lib/api/types";
@@ -317,37 +318,49 @@ export default function WalletPage() {
               createMutation.mutate();
             }}
           >
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Pack name"
-              disabled={createMutation.isPending}
-            />
-            {formErrors.name ? (
-              <p className="text-destructive text-xs">{formErrors.name}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="wallet-pack-name">Pack Name</Label>
+              <Input
+                id="wallet-pack-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Pack name"
+                disabled={createMutation.isPending}
+              />
+              {formErrors.name ? (
+                <p className="text-destructive text-xs">{formErrors.name}</p>
+              ) : null}
+            </div>
 
-            <Input
-              value={credits}
-              onChange={(event) => setCredits(event.target.value)}
-              placeholder="Credits"
-              disabled={createMutation.isPending}
-            />
-            {formErrors.credits ? (
-              <p className="text-destructive text-xs">{formErrors.credits}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="wallet-pack-credits">Credits</Label>
+              <Input
+                id="wallet-pack-credits"
+                value={credits}
+                onChange={(event) => setCredits(event.target.value)}
+                placeholder="Credits"
+                disabled={createMutation.isPending}
+              />
+              {formErrors.credits ? (
+                <p className="text-destructive text-xs">{formErrors.credits}</p>
+              ) : null}
+            </div>
 
-            <Input
-              value={priceCents}
-              onChange={(event) => setPriceCents(event.target.value)}
-              placeholder="Price cents"
-              disabled={createMutation.isPending}
-            />
-            {formErrors.priceCents ? (
-              <p className="text-destructive text-xs">
-                {formErrors.priceCents}
-              </p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="wallet-pack-price-cents">Price Cents</Label>
+              <Input
+                id="wallet-pack-price-cents"
+                value={priceCents}
+                onChange={(event) => setPriceCents(event.target.value)}
+                placeholder="Price cents"
+                disabled={createMutation.isPending}
+              />
+              {formErrors.priceCents ? (
+                <p className="text-destructive text-xs">
+                  {formErrors.priceCents}
+                </p>
+              ) : null}
+            </div>
 
             {formError ? (
               <p className="text-destructive text-xs">{formError}</p>

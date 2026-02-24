@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -222,43 +223,55 @@ export default function NotificationsPage() {
               createMutation.mutate();
             }}
           >
-            <Input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Title"
-              disabled={createMutation.isPending}
-            />
-            {errors.title ? (
-              <p className="text-destructive text-xs">{errors.title}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="campaign-title">Title</Label>
+              <Input
+                id="campaign-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Title"
+                disabled={createMutation.isPending}
+              />
+              {errors.title ? (
+                <p className="text-destructive text-xs">{errors.title}</p>
+              ) : null}
+            </div>
 
-            <NativeSelect
-              value={audience}
-              onChange={(event) =>
-                setAudience(
-                  event.target.value as NotificationCampaign["audience"],
-                )
-              }
-              disabled={createMutation.isPending}
-            >
-              <NativeSelectOption value="all">All</NativeSelectOption>
-              <NativeSelectOption value="active_users">
-                Active users
-              </NativeSelectOption>
-              <NativeSelectOption value="season_users">
-                Season users
-              </NativeSelectOption>
-            </NativeSelect>
+            <div className="space-y-1">
+              <Label htmlFor="campaign-audience">Audience</Label>
+              <NativeSelect
+                id="campaign-audience"
+                value={audience}
+                onChange={(event) =>
+                  setAudience(
+                    event.target.value as NotificationCampaign["audience"],
+                  )
+                }
+                disabled={createMutation.isPending}
+              >
+                <NativeSelectOption value="all">All</NativeSelectOption>
+                <NativeSelectOption value="active_users">
+                  Active users
+                </NativeSelectOption>
+                <NativeSelectOption value="season_users">
+                  Season users
+                </NativeSelectOption>
+              </NativeSelect>
+            </div>
 
-            <Textarea
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              rows={5}
-              disabled={createMutation.isPending}
-            />
-            {errors.body ? (
-              <p className="text-destructive text-xs">{errors.body}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="campaign-body">Message</Label>
+              <Textarea
+                id="campaign-body"
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                rows={5}
+                disabled={createMutation.isPending}
+              />
+              {errors.body ? (
+                <p className="text-destructive text-xs">{errors.body}</p>
+              ) : null}
+            </div>
 
             {formError ? (
               <p className="text-destructive text-xs">{formError}</p>

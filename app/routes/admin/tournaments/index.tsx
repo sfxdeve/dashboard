@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -500,63 +501,83 @@ export default function TournamentListPage() {
               createMutation.mutate();
             }}
           >
-            <NativeSelect
-              value={seasonId}
-              onChange={(event) => setSeasonId(event.target.value)}
-              disabled={createMutation.isPending}
-            >
-              {(seasonsQuery.data ?? []).map((season) => (
-                <NativeSelectOption key={season.id} value={season.id}>
-                  {season.year} - {season.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            {createErrors.seasonId ? (
-              <p className="text-destructive text-xs">
-                {createErrors.seasonId}
-              </p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="tournament-season">Season</Label>
+              <NativeSelect
+                id="tournament-season"
+                value={seasonId}
+                onChange={(event) => setSeasonId(event.target.value)}
+                disabled={createMutation.isPending}
+              >
+                {(seasonsQuery.data ?? []).map((season) => (
+                  <NativeSelectOption key={season.id} value={season.id}>
+                    {season.year} - {season.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {createErrors.seasonId ? (
+                <p className="text-destructive text-xs">
+                  {createErrors.seasonId}
+                </p>
+              ) : null}
+            </div>
 
-            <Input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Name"
-              disabled={createMutation.isPending}
-            />
-            {createErrors.name ? (
-              <p className="text-destructive text-xs">{createErrors.name}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="tournament-name">Name</Label>
+              <Input
+                id="tournament-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Name"
+                disabled={createMutation.isPending}
+              />
+              {createErrors.name ? (
+                <p className="text-destructive text-xs">{createErrors.name}</p>
+              ) : null}
+            </div>
 
-            <Input
-              value={slug}
-              onChange={(event) => setSlug(event.target.value)}
-              placeholder="Slug"
-              disabled={createMutation.isPending}
-            />
-            {createErrors.slug ? (
-              <p className="text-destructive text-xs">{createErrors.slug}</p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="tournament-slug">Slug</Label>
+              <Input
+                id="tournament-slug"
+                value={slug}
+                onChange={(event) => setSlug(event.target.value)}
+                placeholder="Slug"
+                disabled={createMutation.isPending}
+              />
+              {createErrors.slug ? (
+                <p className="text-destructive text-xs">{createErrors.slug}</p>
+              ) : null}
+            </div>
 
-            <Input
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              placeholder="Location"
-              disabled={createMutation.isPending}
-            />
-            {createErrors.location ? (
-              <p className="text-destructive text-xs">
-                {createErrors.location}
-              </p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="tournament-location">Location</Label>
+              <Input
+                id="tournament-location"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                placeholder="Location"
+                disabled={createMutation.isPending}
+              />
+              {createErrors.location ? (
+                <p className="text-destructive text-xs">
+                  {createErrors.location}
+                </p>
+              ) : null}
+            </div>
 
-            <NativeSelect
-              value={gender}
-              onChange={(event) => setGender(event.target.value as Gender)}
-              disabled={createMutation.isPending}
-            >
-              <NativeSelectOption value="men">Men</NativeSelectOption>
-              <NativeSelectOption value="women">Women</NativeSelectOption>
-            </NativeSelect>
+            <div className="space-y-1">
+              <Label htmlFor="tournament-gender">Gender</Label>
+              <NativeSelect
+                id="tournament-gender"
+                value={gender}
+                onChange={(event) => setGender(event.target.value as Gender)}
+                disabled={createMutation.isPending}
+              >
+                <NativeSelectOption value="men">Men</NativeSelectOption>
+                <NativeSelectOption value="women">Women</NativeSelectOption>
+              </NativeSelect>
+            </div>
 
             <DatePickerField
               label="Start Date"
@@ -577,8 +598,10 @@ export default function TournamentListPage() {
             />
 
             <div className="grid grid-cols-3 gap-3">
-              <div>
+              <div className="space-y-1">
+                <Label htmlFor="tournament-roster-size">Roster</Label>
                 <Input
+                  id="tournament-roster-size"
                   value={rosterSize}
                   onChange={(event) => setRosterSize(event.target.value)}
                   placeholder="Roster"
@@ -590,8 +613,10 @@ export default function TournamentListPage() {
                   </p>
                 ) : null}
               </div>
-              <div>
+              <div className="space-y-1">
+                <Label htmlFor="tournament-starter-count">Starters</Label>
                 <Input
+                  id="tournament-starter-count"
                   value={starterCount}
                   onChange={(event) => setStarterCount(event.target.value)}
                   placeholder="Starters"
@@ -603,8 +628,10 @@ export default function TournamentListPage() {
                   </p>
                 ) : null}
               </div>
-              <div>
+              <div className="space-y-1">
+                <Label htmlFor="tournament-reserve-count">Reserves</Label>
                 <Input
+                  id="tournament-reserve-count"
                   value={reserveCount}
                   onChange={(event) => setReserveCount(event.target.value)}
                   placeholder="Reserves"

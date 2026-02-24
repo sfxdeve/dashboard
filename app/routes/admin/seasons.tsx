@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 import type { SeasonStatus } from "~/lib/api/types";
@@ -240,7 +241,9 @@ export default function SeasonsPage() {
             }}
           >
             <div className="space-y-1">
+              <Label htmlFor="season-name">Season Name</Label>
               <Input
+                id="season-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Season name"
@@ -252,7 +255,9 @@ export default function SeasonsPage() {
             </div>
 
             <div className="space-y-1">
+              <Label htmlFor="season-year">Year</Label>
               <Input
+                id="season-year"
                 value={year}
                 onChange={(event) => setYear(event.target.value)}
                 placeholder="Year"

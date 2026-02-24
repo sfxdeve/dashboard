@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 import type { Match } from "~/lib/api/types";
@@ -347,41 +348,53 @@ export default function ScoringPage() {
               updateConfigMutation.mutate();
             }}
           >
-            <Input
-              value={basePointMultiplier}
-              onChange={(event) => setBasePointMultiplier(event.target.value)}
-              placeholder="Base multiplier"
-              disabled={updateConfigMutation.isPending}
-            />
-            {configErrors.basePointMultiplier ? (
-              <p className="text-destructive text-xs">
-                {configErrors.basePointMultiplier}
-              </p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="scoring-base-multiplier">Base Multiplier</Label>
+              <Input
+                id="scoring-base-multiplier"
+                value={basePointMultiplier}
+                onChange={(event) => setBasePointMultiplier(event.target.value)}
+                placeholder="Base multiplier"
+                disabled={updateConfigMutation.isPending}
+              />
+              {configErrors.basePointMultiplier ? (
+                <p className="text-destructive text-xs">
+                  {configErrors.basePointMultiplier}
+                </p>
+              ) : null}
+            </div>
 
-            <Input
-              value={bonusWin20}
-              onChange={(event) => setBonusWin20(event.target.value)}
-              placeholder="2-0 bonus"
-              disabled={updateConfigMutation.isPending}
-            />
-            {configErrors.bonusWin20 ? (
-              <p className="text-destructive text-xs">
-                {configErrors.bonusWin20}
-              </p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="scoring-bonus-win-20">2-0 Bonus</Label>
+              <Input
+                id="scoring-bonus-win-20"
+                value={bonusWin20}
+                onChange={(event) => setBonusWin20(event.target.value)}
+                placeholder="2-0 bonus"
+                disabled={updateConfigMutation.isPending}
+              />
+              {configErrors.bonusWin20 ? (
+                <p className="text-destructive text-xs">
+                  {configErrors.bonusWin20}
+                </p>
+              ) : null}
+            </div>
 
-            <Input
-              value={bonusWin21}
-              onChange={(event) => setBonusWin21(event.target.value)}
-              placeholder="2-1 bonus"
-              disabled={updateConfigMutation.isPending}
-            />
-            {configErrors.bonusWin21 ? (
-              <p className="text-destructive text-xs">
-                {configErrors.bonusWin21}
-              </p>
-            ) : null}
+            <div className="space-y-1">
+              <Label htmlFor="scoring-bonus-win-21">2-1 Bonus</Label>
+              <Input
+                id="scoring-bonus-win-21"
+                value={bonusWin21}
+                onChange={(event) => setBonusWin21(event.target.value)}
+                placeholder="2-1 bonus"
+                disabled={updateConfigMutation.isPending}
+              />
+              {configErrors.bonusWin21 ? (
+                <p className="text-destructive text-xs">
+                  {configErrors.bonusWin21}
+                </p>
+              ) : null}
+            </div>
 
             {configFormError ? (
               <p className="text-destructive text-xs">{configFormError}</p>

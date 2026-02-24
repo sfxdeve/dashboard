@@ -14,6 +14,7 @@ import {
   DrawerTitle,
 } from "~/components/ui/drawer";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 
@@ -123,21 +124,33 @@ export default function AuditLogsPage() {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-          <Input
-            value={actionFilter}
-            onChange={(event) => setActionFilter(event.target.value)}
-            placeholder="Action"
-          />
-          <Input
-            value={entityFilter}
-            onChange={(event) => setEntityFilter(event.target.value)}
-            placeholder="Entity"
-          />
-          <Input
-            value={actorFilter}
-            onChange={(event) => setActorFilter(event.target.value)}
-            placeholder="Actor"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="audit-action-filter">Action</Label>
+            <Input
+              id="audit-action-filter"
+              value={actionFilter}
+              onChange={(event) => setActionFilter(event.target.value)}
+              placeholder="Action"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="audit-entity-filter">Entity</Label>
+            <Input
+              id="audit-entity-filter"
+              value={entityFilter}
+              onChange={(event) => setEntityFilter(event.target.value)}
+              placeholder="Entity"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="audit-actor-filter">Actor</Label>
+            <Input
+              id="audit-actor-filter"
+              value={actorFilter}
+              onChange={(event) => setActorFilter(event.target.value)}
+              placeholder="Actor"
+            />
+          </div>
           <DateTimePickerField
             label="From"
             value={fromFilter}
@@ -154,11 +167,15 @@ export default function AuditLogsPage() {
             allowClear
             minuteStep={5}
           />
-          <Input
-            readOnly
-            value={`${filteredLogs.length} / ${(logsQuery.data?.items ?? []).length}`}
-            placeholder="Results"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="audit-results-count">Results</Label>
+            <Input
+              id="audit-results-count"
+              readOnly
+              value={`${filteredLogs.length} / ${(logsQuery.data?.items ?? []).length}`}
+              placeholder="Results"
+            />
+          </div>
         </CardContent>
       </Card>
 
