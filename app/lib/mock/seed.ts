@@ -406,7 +406,7 @@ export function createSeedState(): MockState {
       {
         id: "l_h2h_2026",
         seasonId: "s_2026",
-        name: "Head to Head 2026",
+        name: "Head-to-Head 2026",
         mode: "head_to_head",
         status: "active",
         tieBreakers: ["head_to_head_points", "match_dominance"],

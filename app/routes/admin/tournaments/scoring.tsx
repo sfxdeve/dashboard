@@ -232,7 +232,7 @@ export default function ScoringPage() {
       <QueryStateCard
         state="loading"
         title="Loading Scoring"
-        description="Fetching scoring config, runs, matches, and entry list."
+        description="Fetching scoring config, runs, matches, and Entry List."
       />
     );
   }
@@ -295,7 +295,7 @@ export default function ScoringPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Dry-Run Preview</CardTitle>
+          <CardTitle>Dry Run Preview</CardTitle>
         </CardHeader>
         <CardContent>
           <EntityTable

@@ -73,6 +73,20 @@ type PendingLock = {
   tournamentName: string;
 };
 
+function formatStatusLabel(status: string) {
+  return status
+    .replaceAll("_", " ")
+    .split(" ")
+    .map((word) =>
+      word.length > 0 ? `${word[0].toUpperCase()}${word.slice(1)}` : word,
+    )
+    .join(" ");
+}
+
+function formatGenderLabel(gender: string) {
+  return `${gender[0]?.toUpperCase() ?? ""}${gender.slice(1)}`;
+}
+
 function canFinalizeEntryList(lineupLockAt: string) {
   const lockTs = Date.parse(lineupLockAt);
   if (!Number.isFinite(lockTs)) {
@@ -128,7 +142,7 @@ export default function TournamentListPage() {
     null,
   );
   const timezoneError = !isValidTimeZone(timezone)
-    ? "Select a valid timezone"
+    ? "Select a valid time zone"
     : undefined;
 
   React.useEffect(() => {
@@ -229,13 +243,13 @@ export default function TournamentListPage() {
   const lockMutation = useMutation({
     mutationFn: (tournamentId: string) => adminApi.lockEntryList(tournamentId),
     onSuccess: () => {
-      toast.success("Entry list locked");
+      toast.success("Entry List locked");
       setPendingLock(null);
       refresh();
     },
     onError: (error) => {
       toast.error(
-        error instanceof Error ? error.message : "Failed to lock entry list",
+        error instanceof Error ? error.message : "Failed to lock Entry List",
       );
     },
   });
@@ -378,7 +392,7 @@ export default function TournamentListPage() {
           {
             key: "gender",
             label: "Gender",
-            render: (row) => row.gender.toUpperCase(),
+            render: (row) => formatGenderLabel(row.gender),
           },
           {
             key: "status",
@@ -399,10 +413,10 @@ export default function TournamentListPage() {
               );
               const lockDisabled = row.entryListLocked || !lockWindowOpen;
               const lockLabel = row.entryListLocked
-                ? "Entry list already locked"
+                ? "Entry List already locked"
                 : !lockWindowOpen
                   ? "Lock available at configured lock time"
-                  : "Lock entry list";
+                  : "Lock Entry List";
 
               return (
                 <DropdownMenu>
@@ -433,7 +447,7 @@ export default function TournamentListPage() {
                         });
                       }}
                     >
-                      Set status to {nextStatus}
+                      Set status to {formatStatusLabel(nextStatus)}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={lockDisabled}
@@ -458,7 +472,7 @@ export default function TournamentListPage() {
         <QueryStateCard
           state="empty"
           title="No Tournaments Found"
-          description="Create a tournament stage to begin admin operations."
+          description="Create a tournament to begin admin operations."
         />
       ) : null}
 
@@ -474,7 +488,7 @@ export default function TournamentListPage() {
           <SheetHeader>
             <SheetTitle>Create Tournament</SheetTitle>
             <SheetDescription>
-              Set base structure, policy, and Thursday-evening lock windows for
+              Set base structure, policy, and Thursday evening lock windows for
               a new tournament.
             </SheetDescription>
           </SheetHeader>
@@ -605,7 +619,7 @@ export default function TournamentListPage() {
             </div>
 
             <DateTimePickerField
-              label="Thursday-evening Lock"
+              label="Thursday Evening Lock"
               value={lineupLockAt}
               onChange={setLineupLockAt}
               timezone={timezone}
@@ -615,7 +629,7 @@ export default function TournamentListPage() {
             />
 
             <div className="space-y-2">
-              <p className="text-sm font-medium">Timezone *</p>
+              <p className="text-sm font-medium">Time Zone *</p>
               <NativeSelect
                 value={timezone}
                 onChange={(event) => setTimezone(event.target.value)}
@@ -674,7 +688,7 @@ export default function TournamentListPage() {
             <AlertDialogTitle>Confirm status change</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingStatusUpdate
-                ? `Set ${pendingStatusUpdate.tournamentName} to ${pendingStatusUpdate.nextStatus}?`
+                ? `Set ${pendingStatusUpdate.tournamentName} to ${formatStatusLabel(pendingStatusUpdate.nextStatus)}?`
                 : "Confirm this action."}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -710,10 +724,10 @@ export default function TournamentListPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Lock entry list</AlertDialogTitle>
+            <AlertDialogTitle>Lock Entry List</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingLock
-                ? `Locking ${pendingLock.tournamentName} entry list cannot be undone from this screen.`
+                ? `Locking the Entry List for ${pendingLock.tournamentName} cannot be undone from this screen.`
                 : "Confirm this action."}
             </AlertDialogDescription>
           </AlertDialogHeader>

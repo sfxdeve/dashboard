@@ -62,7 +62,7 @@ export default function LineupPolicyPage() {
       const activeTimeZone = tournamentQuery.data?.policy.timezone ?? "";
       if (!isValidTimeZone(activeTimeZone)) {
         throw new Error(
-          "Tournament timezone is invalid. Update timezone before saving lineup lock.",
+          "Tournament time zone is invalid. Update the time zone before saving lineup lock.",
         );
       }
 
@@ -113,7 +113,7 @@ export default function LineupPolicyPage() {
   const isLocked = Boolean(tournament?.lineupLocked);
   const tournamentTimeZone = tournament?.policy.timezone ?? "UTC";
   const timezoneError = !isValidTimeZone(tournamentTimeZone)
-    ? "Tournament timezone is invalid. Lineup lock cannot be edited until timezone is corrected."
+    ? "Tournament time zone is invalid. Lineup lock cannot be edited until the time zone is corrected."
     : undefined;
 
   if (tournamentQuery.isLoading) {
@@ -155,7 +155,7 @@ export default function LineupPolicyPage() {
     <div className="space-y-6">
       <PageHeader
         title="Lineup Policy"
-        description="Roster constraints and Thursday-evening lock policy for lineup operations."
+        description="Roster constraints and Thursday evening lock policy for lineup operations."
         action={
           <Button
             variant="outline"
@@ -178,7 +178,7 @@ export default function LineupPolicyPage() {
           <div className="flex items-center gap-2">
             <StatusChip status={isLocked ? "locked" : "open"} />
             <span className="text-muted-foreground text-sm">
-              Thursday-evening lock at{" "}
+              Thursday evening lock at{" "}
               {formatDateTimeForButton(
                 tournament.policy.lineupLockAt,
                 tournamentTimeZone,
@@ -213,7 +213,7 @@ export default function LineupPolicyPage() {
           <SheetHeader>
             <SheetTitle>Edit Lineup Policy</SheetTitle>
             <SheetDescription>
-              Update lineup constraints before the Thursday-evening lock time.
+              Update lineup constraints before the Thursday evening lock time.
             </SheetDescription>
           </SheetHeader>
 

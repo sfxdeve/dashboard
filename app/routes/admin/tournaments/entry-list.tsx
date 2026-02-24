@@ -157,7 +157,7 @@ export default function EntryListPage() {
     mutationFn: (items: EntryListItem[]) =>
       adminApi.replaceEntryList(tournamentId, items),
     onSuccess: () => {
-      toast.success("Entry list updated");
+      toast.success("Entry List updated");
       setBulkAction(null);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.entryList(tournamentId),
@@ -165,7 +165,7 @@ export default function EntryListPage() {
     },
     onError: (error) => {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update entry list",
+        error instanceof Error ? error.message : "Failed to update Entry List",
       );
     },
   });
@@ -193,7 +193,7 @@ export default function EntryListPage() {
       <QueryStateCard
         state="error"
         title="Entry List Unavailable"
-        description="Entry list data failed to load."
+        description="Entry List data failed to load."
         onRetry={() => {
           void queryClient.invalidateQueries({
             queryKey: queryKeys.entryList(tournamentId),
@@ -247,7 +247,7 @@ export default function EntryListPage() {
         </div>
         {!isEntryListLocked && !lockWindowOpen ? (
           <p className="text-muted-foreground mt-1 text-xs">
-            Entry list finalization is available only at or after the configured
+            Entry List finalization is available only at or after the configured
             lock time.
           </p>
         ) : null}

@@ -51,7 +51,7 @@ export default function TournamentDetailPage() {
       <QueryStateCard
         state="loading"
         title="Loading Tournament"
-        description="Fetching tournament summary, entry list, matches, and scoring runs."
+        description="Fetching tournament summary, Entry List, matches, and scoring runs."
       />
     );
   }

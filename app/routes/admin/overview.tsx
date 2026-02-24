@@ -20,6 +20,10 @@ import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 import { formatDateTimeForButton } from "~/lib/datetime";
 
+function formatGenderLabel(gender: string) {
+  return `${gender[0]?.toUpperCase() ?? ""}${gender.slice(1)}`;
+}
+
 export function meta() {
   return [{ title: "Admin Overview" }];
 }
@@ -200,7 +204,7 @@ export default function AdminOverviewPage() {
               <div>
                 <p className="text-sm font-medium">{tournament.name}</p>
                 <p className="text-muted-foreground text-xs">
-                  {tournament.gender.toUpperCase()} · Lock{" "}
+                  {formatGenderLabel(tournament.gender)} · Lock{" "}
                   {formatDateTimeForButton(
                     tournament.policy.lineupLockAt,
                     tournament.policy.timezone,

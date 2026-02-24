@@ -206,7 +206,7 @@ export default function MatchesPage() {
     React.useState<PendingCompletion | null>(null);
   const tournamentTimeZone = tournamentQuery.data?.policy.timezone ?? "UTC";
   const timezoneError = !isValidTimeZone(tournamentTimeZone)
-    ? "Tournament timezone is invalid. Match schedule time cannot be edited."
+    ? "Tournament time zone is invalid. Match schedule time cannot be edited."
     : undefined;
   const cadenceError = React.useMemo(() => {
     if (!tournamentQuery.data || timezoneError) {
@@ -395,7 +395,7 @@ export default function MatchesPage() {
       <QueryStateCard
         state="loading"
         title="Loading Matches"
-        description="Fetching schedule and entry-list pair mappings."
+        description="Fetching schedule and Entry List pair mappings."
       />
     );
   }

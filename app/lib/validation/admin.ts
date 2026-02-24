@@ -51,7 +51,7 @@ export const tournamentSchema = z.object({
   starterCount: numberFromString("Starter count", 1),
   reserveCount: numberFromString("Reserve count", 0),
   lineupLockAt: z.string().trim().refine(isoDate, ISO_DATE_MESSAGE),
-  timezone: z.string().trim().min(1, "Timezone is required"),
+  timezone: z.string().trim().min(1, "Time zone is required"),
 });
 
 export const matchCreateSchema = z.object({

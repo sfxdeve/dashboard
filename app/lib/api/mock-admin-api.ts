@@ -159,7 +159,7 @@ function assertEntryListFinalizationWindow(
   const lockTs = Date.parse(tournament.policy.lineupLockAt);
   if (!Number.isFinite(lockTs)) {
     throw badRequest(
-      "Entry list lock timestamp is invalid",
+      "Entry List lock timestamp is invalid",
       {
         tournamentId: tournament.id,
         lineupLockAt: tournament.policy.lineupLockAt,
@@ -170,7 +170,7 @@ function assertEntryListFinalizationWindow(
 
   if (referenceTs < lockTs) {
     throw badRequest(
-      "Entry list cannot be finalized before the configured lock time",
+      "Entry List cannot be finalized before the configured lock time",
       {
         lineupLockAt: tournament.policy.lineupLockAt,
         timezone: tournament.policy.timezone,
@@ -280,7 +280,7 @@ function validateTournamentPolicy(policy: Tournament["policy"]) {
     });
   }
   if (!policy.timezone.trim()) {
-    throw badRequest("Timezone is required");
+    throw badRequest("Time zone is required");
   }
   if (!Number.isFinite(Date.parse(policy.lineupLockAt))) {
     throw badRequest("Lineup lock timestamp is invalid");
@@ -437,7 +437,7 @@ function assertTournamentGenderIntegrity(
     );
 
     if (players.some((item) => !item)) {
-      throw badRequest("Entry list contains unknown player");
+      throw badRequest("Entry List contains an unknown player");
     }
 
     if (players.some((item) => item && item.gender !== tournament.gender)) {
@@ -851,7 +851,7 @@ export class MockAdminApi implements AdminApi {
       }
 
       if (tournament.entryListLocked) {
-        throw badRequest("Entry list is locked");
+        throw badRequest("Entry List is locked");
       }
 
       const normalized = normalizeEntryList(items);
@@ -890,13 +890,13 @@ export class MockAdminApi implements AdminApi {
       }
 
       if (tournament.entryListLocked) {
-        throw badRequest("Entry list is locked");
+        throw badRequest("Entry List is locked");
       }
 
       const list = current.entryLists[tournamentId] ?? [];
       const index = list.findIndex((item) => item.id === itemId);
       if (index < 0) {
-        throw notFound("Entry list item");
+        throw notFound("Entry List item");
       }
 
       const before = list[index];
@@ -927,7 +927,7 @@ export class MockAdminApi implements AdminApi {
     });
 
     if (!updated) {
-      throw notFound("Entry list item");
+      throw notFound("Entry List item");
     }
 
     return withLatency(updated);

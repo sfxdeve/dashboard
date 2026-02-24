@@ -53,6 +53,16 @@ import { leagueSchema, toFieldErrors } from "~/lib/validation/admin";
 
 const STATUS_ORDER: LeagueStatus[] = ["active", "paused", "completed"];
 
+function formatStatusLabel(status: string) {
+  return status
+    .replaceAll("_", " ")
+    .split(" ")
+    .map((word) =>
+      word.length > 0 ? `${word[0].toUpperCase()}${word.slice(1)}` : word,
+    )
+    .join(" ");
+}
+
 type PendingLeagueAction =
   | {
       type: "status";
@@ -258,7 +268,7 @@ export default function LeaguesPage() {
               disabled={!selectedLeagueId || isAnyMutationPending}
             >
               <Settings2Icon />
-              Edit Tie-Breakers
+              Edit Tie-breakers
             </Button>
             <Button
               onClick={() => setIsCreateOpen(true)}
@@ -295,7 +305,7 @@ export default function LeaguesPage() {
           },
           {
             key: "tieBreakers",
-            label: "Tie-Breakers",
+            label: "Tie-breakers",
             render: (row) => row.tieBreakers.join(", "),
           },
           {
@@ -335,7 +345,7 @@ export default function LeaguesPage() {
                         })
                       }
                     >
-                      Set {nextStatus}
+                      Set status to {formatStatusLabel(nextStatus)}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() =>
@@ -404,7 +414,7 @@ export default function LeaguesPage() {
                 },
                 {
                   key: "tie",
-                  label: "Tie-Break",
+                  label: "Tie-break",
                   render: (row) => row.tieBreakerScore,
                 },
               ]}
@@ -478,7 +488,7 @@ export default function LeaguesPage() {
             >
               <NativeSelectOption value="overall">Overall</NativeSelectOption>
               <NativeSelectOption value="head_to_head">
-                Head to Head
+                Head-to-head
               </NativeSelectOption>
             </NativeSelect>
             {createErrors.mode ? (
@@ -516,7 +526,7 @@ export default function LeaguesPage() {
       >
         <SheetContent className="w-full sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle>Edit Tie-Breakers</SheetTitle>
+            <SheetTitle>Edit Tie-breakers</SheetTitle>
             <SheetDescription>
               Comma-separated list, in priority order.
             </SheetDescription>
@@ -567,7 +577,7 @@ export default function LeaguesPage() {
               >
                 {tieBreakerMutation.isPending
                   ? "Saving..."
-                  : "Save Tie-Breakers"}
+                  : "Save Tie-breakers"}
               </Button>
             </SheetFooter>
           </form>
@@ -595,7 +605,7 @@ export default function LeaguesPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {pendingAction?.type === "status"
-                ? `Set ${pendingAction.leagueName} to ${pendingAction.nextStatus}?`
+                ? `Set ${pendingAction.leagueName} to ${formatStatusLabel(pendingAction.nextStatus)}?`
                 : pendingAction
                   ? `Recompute leaderboard for ${pendingAction.leagueName}?`
                   : "Confirm this action."}

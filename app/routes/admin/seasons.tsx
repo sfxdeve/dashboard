@@ -40,6 +40,16 @@ import { seasonSchema, toFieldErrors } from "~/lib/validation/admin";
 
 const STATUS_ORDER: SeasonStatus[] = ["upcoming", "active", "closed"];
 
+function formatStatusLabel(status: string) {
+  return status
+    .replaceAll("_", " ")
+    .split(" ")
+    .map((word) =>
+      word.length > 0 ? `${word[0].toUpperCase()}${word.slice(1)}` : word,
+    )
+    .join(" ");
+}
+
 type PendingStatusUpdate = {
   seasonId: string;
   seasonName: string;
@@ -188,7 +198,7 @@ export default function SeasonsPage() {
                         });
                       }}
                     >
-                      Set status to {nextStatus}
+                      Set status to {formatStatusLabel(nextStatus)}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -287,7 +297,7 @@ export default function SeasonsPage() {
             <AlertDialogTitle>Confirm status change</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingStatusUpdate
-                ? `Set ${pendingStatusUpdate.seasonName} to ${pendingStatusUpdate.nextStatus}?`
+                ? `Set ${pendingStatusUpdate.seasonName} to ${formatStatusLabel(pendingStatusUpdate.nextStatus)}?`
                 : "Confirm this action."}
             </AlertDialogDescription>
           </AlertDialogHeader>
