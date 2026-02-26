@@ -28,6 +28,12 @@ import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 import type { PaymentEvent } from "~/lib/api/types";
 
+const providerLabels: Record<PaymentEvent["provider"], string> = {
+  apple: "Apple",
+  google: "Google",
+  stripe: "Stripe",
+};
+
 export function meta() {
   return [{ title: "Payments" }];
 }
@@ -59,7 +65,7 @@ export default function PaymentsPage() {
       <QueryStateCard
         state="loading"
         title="Loading Payment Events"
-        description="Fetching Apple/Google verification events."
+        description="Fetching Stripe and mobile-store verification events."
       />
     );
   }
@@ -83,7 +89,7 @@ export default function PaymentsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Payment Verification"
-        description="Monitor Apple/Google validation events and manually re-run verification."
+        description="Monitor Stripe, Apple, and Google validation events and manually re-run verification."
       />
 
       <EntityTable
@@ -91,7 +97,11 @@ export default function PaymentsPage() {
         getRowKey={(row) => row.id}
         columns={[
           { key: "id", label: "Event", render: (row) => row.externalId },
-          { key: "provider", label: "Provider", render: (row) => row.provider },
+          {
+            key: "provider",
+            label: "Provider",
+            render: (row) => providerLabels[row.provider] ?? row.provider,
+          },
           {
             key: "status",
             label: "Status",
@@ -150,7 +160,7 @@ export default function PaymentsPage() {
             <AlertDialogTitle>Re-verify payment event</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingEvent
-                ? `Run verification again for ${pendingEvent.provider} event ${pendingEvent.externalId}.`
+                ? `Run verification again for ${providerLabels[pendingEvent.provider] ?? pendingEvent.provider} event ${pendingEvent.externalId}.`
                 : "Confirm this action."}
             </AlertDialogDescription>
           </AlertDialogHeader>

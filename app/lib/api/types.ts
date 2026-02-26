@@ -22,7 +22,7 @@ export type LeagueMode = "overall" | "head_to_head";
 
 export type LeagueStatus = "active" | "paused" | "completed";
 
-export type PaymentProvider = "apple" | "google";
+export type PaymentProvider = "apple" | "google" | "stripe";
 
 export type PaymentEventStatus = "received" | "verified" | "rejected";
 

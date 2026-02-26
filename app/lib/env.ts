@@ -4,7 +4,10 @@ import { z } from "zod";
 export const env = createEnv({
   clientPrefix: "VITE_",
   client: {
-    VITE_API_BASE_URL: z.string().default(""),
+    VITE_API_BASE_URL: z
+      .string()
+      .trim()
+      .min(1, "VITE_API_BASE_URL is required"),
     VITE_API_TIMEOUT_MS: z
       .string()
       .default("10000")
@@ -14,13 +17,3 @@ export const env = createEnv({
   runtimeEnv: import.meta.env,
   emptyStringAsUndefined: false,
 });
-
-export const isHttpApiEnabled =
-  typeof env.VITE_API_BASE_URL === "string" &&
-  env.VITE_API_BASE_URL.trim().length > 0;
-
-export type ApiRuntimeMode = "http" | "mock";
-
-export const apiRuntimeMode: ApiRuntimeMode = isHttpApiEnabled
-  ? "http"
-  : "mock";
