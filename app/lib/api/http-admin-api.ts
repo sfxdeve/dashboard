@@ -1,4 +1,3 @@
-import type { AdminApi } from "~/lib/api/contracts";
 import { httpClient } from "~/lib/api/client";
 import type {
   AuditLog,
@@ -37,7 +36,7 @@ import type {
   WalletTransaction,
 } from "~/lib/api/types";
 
-export class HttpAdminApi implements AdminApi {
+export class HttpAdminApi {
   async login(input: LoginInput) {
     const { data } = await httpClient.post<Session>("/admin/auth/login", input);
     return data;

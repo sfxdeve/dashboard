@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { createContext, useContext } from "react";
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
 import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group";
 import { type VariantProps } from "class-variance-authority";
@@ -6,7 +6,7 @@ import { type VariantProps } from "class-variance-authority";
 import { cn } from "~/lib/utils";
 import { toggleVariants } from "~/components/ui/toggle";
 
-const ToggleGroupContext = React.createContext<
+const ToggleGroupContext = createContext<
   VariantProps<typeof toggleVariants> & {
     spacing?: number;
     orientation?: "horizontal" | "vertical";
@@ -61,7 +61,7 @@ function ToggleGroupItem({
   size = "default",
   ...props
 }: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
-  const context = React.useContext(ToggleGroupContext);
+  const context = useContext(ToggleGroupContext);
 
   return (
     <TogglePrimitive

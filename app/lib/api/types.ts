@@ -72,9 +72,9 @@ export interface Season {
 }
 
 export interface TournamentPolicy {
-  rosterSize: number;
-  starterCount: number;
-  reserveCount: number;
+  rosterSize: string;
+  starterCount: string;
+  reserveCount: string;
   lineupLockAt: string;
   timezone: string;
   noRetroactiveScoring: boolean;
@@ -135,9 +135,9 @@ export interface EntryListItem {
 }
 
 export interface SetScore {
-  setNumber: number;
-  pairAScore: number;
-  pairBScore: number;
+  setNumber: string;
+  pairAScore: string;
+  pairBScore: string;
 }
 
 export interface Match {
@@ -148,7 +148,7 @@ export interface Match {
   round: number;
   slot: number;
   status: MatchStatus;
-  bestOf: 3;
+  bestOf: string;
   pairAId: string;
   pairBId: string;
   setScores: SetScore[];
@@ -324,7 +324,7 @@ export interface LoginInput {
 }
 
 export interface CreateSeasonInput {
-  year: number;
+  year: string;
   name: string;
 }
 
@@ -382,9 +382,9 @@ export interface CompleteMatchInput {
 }
 
 export interface UpdateScoringConfigInput {
-  basePointMultiplier: number;
-  bonusWin20: number;
-  bonusWin21: number;
+  basePointMultiplier: string;
+  bonusWin20: string;
+  bonusWin21: string;
 }
 
 export interface CreateLeagueInput {
@@ -401,15 +401,15 @@ export interface UpdateLeagueInput {
 
 export interface CreateWalletPackInput {
   name: string;
-  credits: number;
-  priceCents: number;
+  credits: string;
+  priceCents: string;
   currency: string;
 }
 
 export interface UpdateWalletPackInput {
   name?: string;
-  credits?: number;
-  priceCents?: number;
+  credits?: string;
+  priceCents?: string;
   active?: boolean;
 }
 

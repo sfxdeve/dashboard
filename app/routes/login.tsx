@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -13,23 +13,26 @@ import {
 } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { adminApi } from "~/lib/api";
-import { setSession, useStoredSession } from "~/lib/auth/session";
+import { HttpAdminApi } from "~/lib/api/http-admin-api";
+import { setSession } from "~/lib/auth/session";
+import { useSession } from "~/hooks/use-session";
+
+const adminApi = new HttpAdminApi();
 
 export function meta() {
   return [{ title: "Admin Login" }];
 }
 
 export default function LoginPage() {
-  const session = useStoredSession();
+  const session = useSession();
   const [search] = useSearchParams();
   const navigate = useNavigate();
   const redirectTo = search.get("redirect") || "/admin";
 
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (session) {
       void navigate(redirectTo, { replace: true });
     }
