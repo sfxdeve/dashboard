@@ -1,9 +1,14 @@
 import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+} from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { EntityTable } from "~/components/blocks/entity-table";
 import { PageHeader } from "~/components/blocks/page-header";
 import { QueryStateCard } from "~/components/blocks/query-state-card";
 import { StatusChip } from "~/components/blocks/status-chip";
@@ -24,13 +29,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 import type { PaymentEvent } from "~/lib/api/types";
 
 const providerLabels: Record<PaymentEvent["provider"], string> = {
-  apple: "Apple",
-  google: "Google",
   stripe: "Stripe",
 };
 
@@ -60,12 +71,70 @@ export default function PaymentsPage() {
     },
   });
 
+  const eventColumns = React.useMemo<ColumnDef<PaymentEvent>[]>(
+    () => [
+      {
+        accessorKey: "externalId",
+        header: "Event",
+      },
+      {
+        accessorKey: "provider",
+        header: "Provider",
+        cell: ({ row }) =>
+          providerLabels[row.original.provider] ?? row.original.provider,
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <StatusChip status={row.original.status} />,
+      },
+      {
+        accessorKey: "receivedAt",
+        header: "Received",
+        cell: ({ row }) => new Date(row.original.receivedAt).toLocaleString(),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  disabled={reverifyMutation.isPending}
+                  aria-label={`Open actions for ${row.original.externalId}`}
+                >
+                  <MoreHorizontalIcon />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setPendingEvent(row.original)}>
+                Re-verify
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ],
+    [reverifyMutation.isPending],
+  );
+
+  const table = useReactTable({
+    data: eventsQuery.data?.items ?? [],
+    columns: eventColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
+  });
+
   if (eventsQuery.isLoading) {
     return (
       <QueryStateCard
         state="loading"
         title="Loading Payment Events"
-        description="Fetching Stripe and mobile-store verification events."
+        description="Fetching Stripe verification events."
       />
     );
   }
@@ -89,56 +158,49 @@ export default function PaymentsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Payment Verification"
-        description="Monitor Stripe, Apple, and Google validation events and manually re-run verification."
+        description="Monitor Stripe validation events and manually re-run verification."
       />
 
-      <EntityTable
-        rows={eventsQuery.data?.items ?? []}
-        getRowKey={(row) => row.id}
-        columns={[
-          { key: "id", label: "Event", render: (row) => row.externalId },
-          {
-            key: "provider",
-            label: "Provider",
-            render: (row) => providerLabels[row.provider] ?? row.provider,
-          },
-          {
-            key: "status",
-            label: "Status",
-            render: (row) => <StatusChip status={row.status} />,
-          },
-          {
-            key: "received",
-            label: "Received",
-            render: (row) => new Date(row.receivedAt).toLocaleString(),
-          },
-          {
-            key: "actions",
-            label: "Actions",
-            render: (row) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      disabled={reverifyMutation.isPending}
-                      aria-label={`Open actions for ${row.externalId}`}
-                    >
-                      <MoreHorizontalIcon />
-                    </Button>
-                  }
-                />
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setPendingEvent(row)}>
-                    Re-verify
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ),
-          },
-        ]}
-      />
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.length === 0 ? (
+            <TableRow>
+              <TableCell
+                className="text-muted-foreground py-8 text-center"
+                colSpan={eventColumns.length}
+              >
+                No records found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
       {(eventsQuery.data?.items ?? []).length === 0 ? (
         <QueryStateCard
           state="empty"

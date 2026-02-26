@@ -1,5 +1,7 @@
 import type {
   AuditLog,
+  AuditLogFilters,
+  AdminOverview,
   BracketData,
   CompleteMatchInput,
   CreateLeagueInput,
@@ -38,11 +40,14 @@ export interface AdminApi {
   me(): Promise<Session["user"]>;
   logout(): Promise<void>;
 
-  getSeasons(): Promise<Season[]>;
+  getSeasons(params?: PaginationParams): Promise<Paginated<Season>>;
+  getOverview(): Promise<AdminOverview>;
   createSeason(input: CreateSeasonInput): Promise<Season>;
   updateSeason(seasonId: string, input: UpdateSeasonInput): Promise<Season>;
 
-  getTournaments(filters?: TournamentFilters): Promise<Tournament[]>;
+  getTournaments(
+    filters?: TournamentFilters & PaginationParams,
+  ): Promise<Paginated<Tournament>>;
   createTournament(input: CreateTournamentInput): Promise<Tournament>;
   getTournament(tournamentId: string): Promise<Tournament>;
   updateTournament(
@@ -79,13 +84,13 @@ export interface AdminApi {
   recalculateScoring(tournamentId: string): Promise<ScoringRun>;
   getScoringRuns(tournamentId: string): Promise<ScoringRun[]>;
 
-  getLeagues(): Promise<League[]>;
+  getLeagues(params?: PaginationParams): Promise<Paginated<League>>;
   createLeague(input: CreateLeagueInput): Promise<League>;
   updateLeague(leagueId: string, input: UpdateLeagueInput): Promise<League>;
   getLeagueLeaderboard(leagueId: string): Promise<LeaderboardRow[]>;
   recomputeLeague(leagueId: string): Promise<LeaderboardRow[]>;
 
-  getWalletPacks(): Promise<WalletPack[]>;
+  getWalletPacks(params?: PaginationParams): Promise<Paginated<WalletPack>>;
   createWalletPack(input: CreateWalletPackInput): Promise<WalletPack>;
   updateWalletPack(
     packId: string,
@@ -98,12 +103,14 @@ export interface AdminApi {
   getPaymentEvents(params?: PaginationParams): Promise<Paginated<PaymentEvent>>;
   reverifyPaymentEvent(eventId: string): Promise<PaymentEvent>;
 
-  getNotificationCampaigns(): Promise<NotificationCampaign[]>;
+  getNotificationCampaigns(
+    params?: PaginationParams,
+  ): Promise<Paginated<NotificationCampaign>>;
   createNotificationCampaign(
     input: CreateNotificationCampaignInput,
   ): Promise<NotificationCampaign>;
   sendNotificationCampaign(campaignId: string): Promise<NotificationCampaign>;
 
-  getAuditLogs(params?: PaginationParams): Promise<Paginated<AuditLog>>;
+  getAuditLogs(params?: AuditLogFilters): Promise<Paginated<AuditLog>>;
   getAuditLog(logId: string): Promise<AuditLog>;
 }

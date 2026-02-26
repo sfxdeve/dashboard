@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ActivityIcon,
   ArrowRightIcon,
@@ -30,71 +29,12 @@ export function meta() {
 
 export default function AdminOverviewPage() {
   const queryClient = useQueryClient();
-  const tournamentsQuery = useQuery({
-    queryKey: queryKeys.tournaments(),
-    queryFn: () => adminApi.getTournaments(),
+  const overviewQuery = useQuery({
+    queryKey: queryKeys.overview,
+    queryFn: () => adminApi.getOverview(),
   });
 
-  const paymentQuery = useQuery({
-    queryKey: queryKeys.paymentEvents(1, 100),
-    queryFn: () => adminApi.getPaymentEvents({ page: 1, pageSize: 100 }),
-  });
-
-  const matchQueries = useQueries({
-    queries: (tournamentsQuery.data ?? []).map((tournament) => ({
-      queryKey: queryKeys.matches(tournament.id),
-      queryFn: () => adminApi.getMatches(tournament.id),
-    })),
-  });
-
-  const scoringQueries = useQueries({
-    queries: (tournamentsQuery.data ?? []).map((tournament) => ({
-      queryKey: queryKeys.scoringRuns(tournament.id),
-      queryFn: () => adminApi.getScoringRuns(tournament.id),
-    })),
-  });
-
-  const hasDependentLoading =
-    matchQueries.some((query) => query.isLoading) ||
-    scoringQueries.some((query) => query.isLoading);
-  const hasDependentError =
-    matchQueries.some((query) => query.isError) ||
-    scoringQueries.some((query) => query.isError);
-
-  const kpis = useMemo(() => {
-    const tournaments = tournamentsQuery.data ?? [];
-    const matches = matchQueries.flatMap((query) => query.data ?? []);
-    const scoringRuns = scoringQueries.flatMap((query) => query.data ?? []);
-    const paymentEvents = paymentQuery.data?.items ?? [];
-
-    return {
-      activeTournaments: tournaments.filter((item) =>
-        ["open", "live", "entry_locked"].includes(item.status),
-      ).length,
-      lockedEntryLists: tournaments.filter((item) => item.entryListLocked)
-        .length,
-      pendingMatches: matches.filter(
-        (item) => item.status === "scheduled" || item.status === "live",
-      ).length,
-      completedMatches: matches.filter((item) => item.status === "completed")
-        .length,
-      scoringRuns: scoringRuns.length,
-      failedPaymentEvents: paymentEvents.filter(
-        (item) => item.status === "rejected",
-      ).length,
-    };
-  }, [
-    matchQueries,
-    paymentQuery.data?.items,
-    scoringQueries,
-    tournamentsQuery.data,
-  ]);
-
-  if (
-    tournamentsQuery.isLoading ||
-    paymentQuery.isLoading ||
-    hasDependentLoading
-  ) {
+  if (overviewQuery.isLoading) {
     return (
       <QueryStateCard
         state="loading"
@@ -104,7 +44,7 @@ export default function AdminOverviewPage() {
     );
   }
 
-  if (tournamentsQuery.isError || paymentQuery.isError || hasDependentError) {
+  if (overviewQuery.isError) {
     return (
       <QueryStateCard
         state="error"
@@ -112,23 +52,15 @@ export default function AdminOverviewPage() {
         description="One or more admin datasets failed to load."
         onRetry={() => {
           void queryClient.invalidateQueries({
-            queryKey: queryKeys.tournamentsRoot,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: queryKeys.paymentEventsRoot,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: queryKeys.matchesRoot,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: queryKeys.scoringRunsRoot,
+            queryKey: queryKeys.overview,
           });
         }}
       />
     );
   }
 
-  if ((tournamentsQuery.data ?? []).length === 0) {
+  const overview = overviewQuery.data;
+  if (!overview || overview.tournaments.length === 0) {
     return (
       <QueryStateCard
         state="empty"
@@ -149,42 +81,42 @@ export default function AdminOverviewPage() {
         <Link to="/admin/tournaments" className="block">
           <KpiCard
             label="Active Tournaments"
-            value={kpis.activeTournaments}
+            value={overview.activeTournaments}
             icon={<TrophyIcon className="size-4" />}
           />
         </Link>
         <Link to="/admin/tournaments" className="block">
           <KpiCard
             label="Entry Lists Locked"
-            value={kpis.lockedEntryLists}
+            value={overview.lockedEntryLists}
             icon={<LockIcon className="size-4" />}
           />
         </Link>
         <Link to="/admin/tournaments" className="block">
           <KpiCard
             label="Pending Matches"
-            value={kpis.pendingMatches}
+            value={overview.pendingMatches}
             icon={<PlayCircleIcon className="size-4" />}
           />
         </Link>
         <Link to="/admin/tournaments" className="block">
           <KpiCard
             label="Completed Matches"
-            value={kpis.completedMatches}
+            value={overview.completedMatches}
             icon={<FlagIcon className="size-4" />}
           />
         </Link>
         <Link to="/admin/tournaments" className="block">
           <KpiCard
             label="Scoring Runs"
-            value={kpis.scoringRuns}
+            value={overview.scoringRuns}
             icon={<ActivityIcon className="size-4" />}
           />
         </Link>
         <Link to="/admin/payments" className="block">
           <KpiCard
             label="Failed Payments"
-            value={kpis.failedPaymentEvents}
+            value={overview.failedPaymentEvents}
             icon={<SirenIcon className="size-4" />}
           />
         </Link>
@@ -195,7 +127,7 @@ export default function AdminOverviewPage() {
           <CardTitle>Tournament Integrity Status</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {(tournamentsQuery.data ?? []).map((tournament) => (
+          {overview.tournaments.map((tournament) => (
             <Link
               key={tournament.id}
               to={`/admin/tournaments/${tournament.id}`}

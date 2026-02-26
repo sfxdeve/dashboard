@@ -1,5 +1,3 @@
-export type AdminRole = "super_admin" | "ops_admin";
-
 export type Gender = "men" | "women";
 
 export type SeasonStatus = "upcoming" | "active" | "closed";
@@ -22,7 +20,7 @@ export type LeagueMode = "overall" | "head_to_head";
 
 export type LeagueStatus = "active" | "paused" | "completed";
 
-export type PaymentProvider = "apple" | "google" | "stripe";
+export type PaymentProvider = "stripe";
 
 export type PaymentEventStatus = "received" | "verified" | "rejected";
 
@@ -55,7 +53,6 @@ export interface AdminUser {
   id: string;
   email: string;
   displayName: string;
-  role: AdminRole;
   active: boolean;
 }
 
@@ -292,13 +289,33 @@ export interface AuditLog {
   after?: unknown;
 }
 
-export interface OverviewKpis {
+export interface AdminOverview {
   activeTournaments: number;
   lockedEntryLists: number;
   pendingMatches: number;
   completedMatches: number;
   scoringRuns: number;
   failedPaymentEvents: number;
+  tournaments: Array<{
+    id: string;
+    name: string;
+    gender: Gender;
+    status: TournamentStatus;
+    entryListLocked: boolean;
+    policy: {
+      lineupLockAt: string;
+      timezone: string;
+    };
+  }>;
+}
+
+export interface AuditLogFilters extends PaginationParams {
+  action?: string;
+  entityType?: string;
+  entityId?: string;
+  actorUserId?: string;
+  from?: string;
+  to?: string;
 }
 
 export interface LoginInput {
@@ -357,6 +374,7 @@ export interface UpdateMatchInput {
   status?: MatchStatus;
   setScores?: SetScore[];
   scheduledAt?: string;
+  day?: DayBucket;
 }
 
 export interface CompleteMatchInput {

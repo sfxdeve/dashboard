@@ -1,9 +1,15 @@
 import * as React from "react";
+import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+} from "@tanstack/react-table";
 import { MoreHorizontalIcon, PlusIcon, Settings2Icon } from "lucide-react";
 import { toast } from "sonner";
 
-import { EntityTable } from "~/components/blocks/entity-table";
 import { PageHeader } from "~/components/blocks/page-header";
 import { QueryStateCard } from "~/components/blocks/query-state-card";
 import { StatusChip } from "~/components/blocks/status-chip";
@@ -40,6 +46,14 @@ import {
   NativeSelectOption,
 } from "~/components/ui/native-select";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -49,7 +63,12 @@ import {
 } from "~/components/ui/sheet";
 import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
-import type { LeagueMode, LeagueStatus } from "~/lib/api/types";
+import type {
+  LeaderboardRow,
+  League,
+  LeagueMode,
+  LeagueStatus,
+} from "~/lib/api/types";
 import { leagueSchema, toFieldErrors } from "~/lib/validation/admin";
 
 const STATUS_ORDER: LeagueStatus[] = ["active", "paused", "completed"];
@@ -80,22 +99,22 @@ export function meta() {
 
 export default function LeaguesPage() {
   const queryClient = useQueryClient();
+  const [seasonPage, setSeasonPage] = React.useState(1);
+  const [leaguePage, setLeaguePage] = React.useState(1);
+  const pageSize = 20;
 
   const seasonsQuery = useQuery({
-    queryKey: queryKeys.seasons,
-    queryFn: () => adminApi.getSeasons(),
+    queryKey: queryKeys.seasons(seasonPage, pageSize),
+    queryFn: () => adminApi.getSeasons({ page: seasonPage, pageSize }),
   });
 
   const leaguesQuery = useQuery({
-    queryKey: queryKeys.leagues,
-    queryFn: () => adminApi.getLeagues(),
+    queryKey: queryKeys.leagues(leaguePage, pageSize),
+    queryFn: () => adminApi.getLeagues({ page: leaguePage, pageSize }),
   });
 
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [isTieBreakerOpen, setIsTieBreakerOpen] = React.useState(false);
-  const [seasonId, setSeasonId] = React.useState("s_2026");
-  const [name, setName] = React.useState("New League");
-  const [mode, setMode] = React.useState<LeagueMode>("overall");
   const [selectedLeagueId, setSelectedLeagueId] = React.useState("");
   const [tieBreakersInput, setTieBreakersInput] = React.useState(
     "highest_player_score, match_dominance",
@@ -112,20 +131,50 @@ export default function LeaguesPage() {
   const [pendingAction, setPendingAction] =
     React.useState<PendingLeagueAction>(null);
 
+  const createForm = useForm({
+    defaultValues: {
+      seasonId: "s_2026",
+      name: "New League",
+      mode: "overall" as LeagueMode,
+    },
+    onSubmit: async ({ value }) => {
+      const parsed = leagueSchema.safeParse(value);
+      if (!parsed.success) {
+        setCreateErrors(toFieldErrors(parsed.error));
+        setCreateFormError("Please correct the highlighted fields");
+        return;
+      }
+
+      setCreateErrors({});
+      setCreateFormError(null);
+      try {
+        await createMutation.mutateAsync(parsed.data);
+        toast.success("League created");
+        setIsCreateOpen(false);
+        createForm.reset();
+        refresh();
+      } catch (error) {
+        setCreateFormError(
+          error instanceof Error ? error.message : "Failed to create league",
+        );
+      }
+    },
+  });
+
   React.useEffect(() => {
-    if (seasonsQuery.data?.[0]) {
-      setSeasonId(seasonsQuery.data[0].id);
+    if (seasonsQuery.data?.items?.[0]) {
+      createForm.setFieldValue("seasonId", seasonsQuery.data.items[0].id);
     }
   }, [seasonsQuery.data]);
 
   React.useEffect(() => {
-    if (leaguesQuery.data?.[0] && !selectedLeagueId) {
-      setSelectedLeagueId(leaguesQuery.data[0].id);
+    if (leaguesQuery.data?.items?.[0] && !selectedLeagueId) {
+      setSelectedLeagueId(leaguesQuery.data.items[0].id);
     }
   }, [leaguesQuery.data, selectedLeagueId]);
 
   React.useEffect(() => {
-    const selected = (leaguesQuery.data ?? []).find(
+    const selected = (leaguesQuery.data?.items ?? []).find(
       (league) => league.id === selectedLeagueId,
     );
     if (!selected) {
@@ -142,7 +191,7 @@ export default function LeaguesPage() {
   });
 
   const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.leagues });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.leagues() });
     if (selectedLeagueId) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.leaderboard(selectedLeagueId),
@@ -151,27 +200,7 @@ export default function LeaguesPage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: async () => {
-      const parsed = leagueSchema.safeParse({ seasonId, name, mode });
-      if (!parsed.success) {
-        setCreateErrors(toFieldErrors(parsed.error));
-        throw new Error("Please correct the highlighted fields");
-      }
-
-      setCreateErrors({});
-      setCreateFormError(null);
-      return adminApi.createLeague(parsed.data);
-    },
-    onSuccess: () => {
-      toast.success("League created");
-      setIsCreateOpen(false);
-      refresh();
-    },
-    onError: (error) => {
-      setCreateFormError(
-        error instanceof Error ? error.message : "Failed to create league",
-      );
-    },
+    mutationFn: adminApi.createLeague,
   });
 
   const updateMutation = useMutation({
@@ -232,6 +261,114 @@ export default function LeaguesPage() {
     tieBreakerMutation.isPending ||
     recomputeMutation.isPending;
 
+  const leagueColumns = React.useMemo<ColumnDef<League>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "League",
+        cell: ({ row }) => (
+          <button
+            type="button"
+            className="text-left underline-offset-2 hover:underline"
+            onClick={() => setSelectedLeagueId(row.original.id)}
+          >
+            {row.original.name}
+          </button>
+        ),
+      },
+      {
+        accessorKey: "mode",
+        header: "Mode",
+        cell: ({ row }) => row.original.mode.replaceAll("_", " "),
+      },
+      {
+        accessorKey: "tieBreakers",
+        header: "Tie-breakers",
+        cell: ({ row }) => row.original.tieBreakers.join(", "),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <StatusChip status={row.original.status} />,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const currentIndex = STATUS_ORDER.indexOf(row.original.status);
+          const nextStatus =
+            STATUS_ORDER[(currentIndex + 1) % STATUS_ORDER.length];
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="outline"
+                    disabled={isAnyMutationPending}
+                    aria-label={`Open actions for ${row.original.name}`}
+                  >
+                    <MoreHorizontalIcon />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() =>
+                    setPendingAction({
+                      type: "status",
+                      leagueId: row.original.id,
+                      leagueName: row.original.name,
+                      nextStatus,
+                    })
+                  }
+                >
+                  Set status to {formatStatusLabel(nextStatus)}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    setPendingAction({
+                      type: "recompute",
+                      leagueId: row.original.id,
+                      leagueName: row.original.name,
+                    })
+                  }
+                >
+                  Recompute
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
+    ],
+    [isAnyMutationPending],
+  );
+
+  const leaderboardColumns = React.useMemo<ColumnDef<LeaderboardRow>[]>(
+    () => [
+      { accessorKey: "rank", header: "Rank" },
+      { accessorKey: "displayName", header: "User" },
+      { accessorKey: "totalPoints", header: "Points" },
+      { accessorKey: "tieBreakerScore", header: "Tie-break" },
+    ],
+    [],
+  );
+
+  const leagueTable = useReactTable({
+    data: leaguesQuery.data?.items ?? [],
+    columns: leagueColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
+  });
+
+  const leaderboardTable = useReactTable({
+    data: leaderboardQuery.data ?? [],
+    columns: leaderboardColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
+  });
+
   if (seasonsQuery.isLoading || leaguesQuery.isLoading) {
     return (
       <QueryStateCard
@@ -249,8 +386,8 @@ export default function LeaguesPage() {
         title="Leagues Unavailable"
         description="Failed to load league management data."
         onRetry={() => {
-          void queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
-          void queryClient.invalidateQueries({ queryKey: queryKeys.leagues });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.seasons() });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.leagues() });
         }}
       />
     );
@@ -282,90 +419,46 @@ export default function LeaguesPage() {
         }
       />
 
-      <EntityTable
-        rows={leaguesQuery.data ?? []}
-        getRowKey={(row) => row.id}
-        columns={[
-          {
-            key: "name",
-            label: "League",
-            render: (row) => (
-              <button
-                type="button"
-                className="text-left underline-offset-2 hover:underline"
-                onClick={() => setSelectedLeagueId(row.id)}
+      <Table>
+        <TableHeader>
+          {leagueTable.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {leagueTable.getRowModel().rows.length === 0 ? (
+            <TableRow>
+              <TableCell
+                className="text-muted-foreground py-8 text-center"
+                colSpan={leagueColumns.length}
               >
-                {row.name}
-              </button>
-            ),
-          },
-          {
-            key: "mode",
-            label: "Mode",
-            render: (row) => row.mode.replaceAll("_", " "),
-          },
-          {
-            key: "tieBreakers",
-            label: "Tie-breakers",
-            render: (row) => row.tieBreakers.join(", "),
-          },
-          {
-            key: "status",
-            label: "Status",
-            render: (row) => <StatusChip status={row.status} />,
-          },
-          {
-            key: "actions",
-            label: "Actions",
-            render: (row) => {
-              const currentIndex = STATUS_ORDER.indexOf(row.status);
-              const nextStatus =
-                STATUS_ORDER[(currentIndex + 1) % STATUS_ORDER.length];
-              return (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        size="icon-sm"
-                        variant="outline"
-                        disabled={isAnyMutationPending}
-                        aria-label={`Open actions for ${row.name}`}
-                      >
-                        <MoreHorizontalIcon />
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() =>
-                        setPendingAction({
-                          type: "status",
-                          leagueId: row.id,
-                          leagueName: row.name,
-                          nextStatus,
-                        })
-                      }
-                    >
-                      Set status to {formatStatusLabel(nextStatus)}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        setPendingAction({
-                          type: "recompute",
-                          leagueId: row.id,
-                          leagueName: row.name,
-                        })
-                      }
-                    >
-                      Recompute
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              );
-            },
-          },
-        ]}
-      />
+                No records found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            leagueTable.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
 
       <Card>
         <CardHeader>
@@ -398,33 +491,43 @@ export default function LeaguesPage() {
               description="Run scoring and recompute the league to populate standings."
             />
           ) : (
-            <EntityTable
-              rows={leaderboardQuery.data ?? []}
-              getRowKey={(row) => row.id}
-              columns={[
-                { key: "rank", label: "Rank", render: (row) => row.rank },
-                {
-                  key: "user",
-                  label: "User",
-                  render: (row) => row.displayName,
-                },
-                {
-                  key: "points",
-                  label: "Points",
-                  render: (row) => row.totalPoints,
-                },
-                {
-                  key: "tie",
-                  label: "Tie-break",
-                  render: (row) => row.tieBreakerScore,
-                },
-              ]}
-            />
+            <Table>
+              <TableHeader>
+                {leaderboardTable.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {leaderboardTable.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      {(leaguesQuery.data ?? []).length === 0 ? (
+      {(leaguesQuery.data?.items.length ?? 0) === 0 ? (
         <QueryStateCard
           state="empty"
           title="No Leagues Configured"
@@ -452,61 +555,84 @@ export default function LeaguesPage() {
             className="space-y-3"
             onSubmit={(event) => {
               event.preventDefault();
-              createMutation.mutate();
+              void createForm.handleSubmit();
             }}
           >
-            <div className="space-y-1">
-              <Label htmlFor="league-season">Season</Label>
-              <NativeSelect
-                id="league-season"
-                value={seasonId}
-                onChange={(event) => setSeasonId(event.target.value)}
-                disabled={createMutation.isPending}
-              >
-                {(seasonsQuery.data ?? []).map((season) => (
-                  <NativeSelectOption key={season.id} value={season.id}>
-                    {season.year} - {season.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              {createErrors.seasonId ? (
-                <p className="text-destructive text-xs">
-                  {createErrors.seasonId}
-                </p>
-              ) : null}
-            </div>
+            <createForm.Field name="seasonId">
+              {(field) => (
+                <div className="space-y-1">
+                  <Label htmlFor="league-season">Season</Label>
+                  <NativeSelect
+                    id="league-season"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    disabled={createMutation.isPending}
+                  >
+                    {(seasonsQuery.data?.items ?? []).map((season) => (
+                      <NativeSelectOption key={season.id} value={season.id}>
+                        {season.year} - {season.name}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                  {createErrors.seasonId ? (
+                    <p className="text-destructive text-xs">
+                      {createErrors.seasonId}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            </createForm.Field>
 
-            <div className="space-y-1">
-              <Label htmlFor="league-name">League Name</Label>
-              <Input
-                id="league-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="League name"
-                disabled={createMutation.isPending}
-              />
-              {createErrors.name ? (
-                <p className="text-destructive text-xs">{createErrors.name}</p>
-              ) : null}
-            </div>
+            <createForm.Field name="name">
+              {(field) => (
+                <div className="space-y-1">
+                  <Label htmlFor="league-name">League Name</Label>
+                  <Input
+                    id="league-name"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    placeholder="League name"
+                    disabled={createMutation.isPending}
+                  />
+                  {createErrors.name ? (
+                    <p className="text-destructive text-xs">
+                      {createErrors.name}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            </createForm.Field>
 
-            <div className="space-y-1">
-              <Label htmlFor="league-mode">League Mode</Label>
-              <NativeSelect
-                id="league-mode"
-                value={mode}
-                onChange={(event) => setMode(event.target.value as LeagueMode)}
-                disabled={createMutation.isPending}
-              >
-                <NativeSelectOption value="overall">Overall</NativeSelectOption>
-                <NativeSelectOption value="head_to_head">
-                  Head-to-head
-                </NativeSelectOption>
-              </NativeSelect>
-              {createErrors.mode ? (
-                <p className="text-destructive text-xs">{createErrors.mode}</p>
-              ) : null}
-            </div>
+            <createForm.Field name="mode">
+              {(field) => (
+                <div className="space-y-1">
+                  <Label htmlFor="league-mode">League Mode</Label>
+                  <NativeSelect
+                    id="league-mode"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) =>
+                      field.handleChange(event.target.value as LeagueMode)
+                    }
+                    disabled={createMutation.isPending}
+                  >
+                    <NativeSelectOption value="overall">
+                      Overall
+                    </NativeSelectOption>
+                    <NativeSelectOption value="head_to_head">
+                      Head-to-head
+                    </NativeSelectOption>
+                  </NativeSelect>
+                  {createErrors.mode ? (
+                    <p className="text-destructive text-xs">
+                      {createErrors.mode}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            </createForm.Field>
 
             {createFormError ? (
               <p className="text-destructive text-xs">{createFormError}</p>
@@ -560,7 +686,7 @@ export default function LeaguesPage() {
                 onChange={(event) => setSelectedLeagueId(event.target.value)}
                 disabled={tieBreakerMutation.isPending}
               >
-                {(leaguesQuery.data ?? []).map((league) => (
+                {(leaguesQuery.data?.items ?? []).map((league) => (
                   <NativeSelectOption key={league.id} value={league.id}>
                     {league.name}
                   </NativeSelectOption>

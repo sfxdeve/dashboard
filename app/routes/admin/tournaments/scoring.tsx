@@ -1,10 +1,15 @@
 import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  type ColumnDef,
+} from "@tanstack/react-table";
 import { Settings2Icon } from "lucide-react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 
-import { EntityTable } from "~/components/blocks/entity-table";
 import { PageHeader } from "~/components/blocks/page-header";
 import { QueryStateCard } from "~/components/blocks/query-state-card";
 import { ScoringRunPanel } from "~/components/blocks/scoring-run-panel";
@@ -30,6 +35,14 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { adminApi } from "~/lib/api";
 import { queryKeys } from "~/lib/api/query-keys";
 import type { Match } from "~/lib/api/types";
@@ -180,7 +193,7 @@ export default function ScoringPage() {
     void queryClient.invalidateQueries({
       queryKey: queryKeys.scoringRuns(tournamentId),
     });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.leagues });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.leagues() });
   };
 
   const updateConfigMutation = useMutation({
@@ -269,6 +282,23 @@ export default function ScoringPage() {
 
   const isPending = updateConfigMutation.isPending || runMutation.isPending;
 
+  const previewColumns = React.useMemo<
+    ColumnDef<{ playerId: string; points: number }>[]
+  >(
+    () => [
+      { accessorKey: "playerId", header: "Player" },
+      { accessorKey: "points", header: "Projected Points" },
+    ],
+    [],
+  );
+
+  const previewTable = useReactTable({
+    data: previewRows,
+    columns: previewColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.playerId,
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -299,19 +329,49 @@ export default function ScoringPage() {
           <CardTitle>Dry Run Preview</CardTitle>
         </CardHeader>
         <CardContent>
-          <EntityTable
-            rows={previewRows}
-            getRowKey={(row) => row.playerId}
-            columns={[
-              { key: "player", label: "Player", render: (row) => row.playerId },
-              {
-                key: "points",
-                label: "Projected Points",
-                render: (row) => row.points,
-              },
-            ]}
-            emptyMessage="No completed matches yet."
-          />
+          <Table>
+            <TableHeader>
+              {previewTable.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {previewTable.getRowModel().rows.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    className="text-muted-foreground py-8 text-center"
+                    colSpan={previewColumns.length}
+                  >
+                    No completed matches yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                previewTable.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

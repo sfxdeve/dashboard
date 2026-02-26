@@ -103,10 +103,13 @@ export function meta() {
 export default function TournamentListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [page, setPage] = React.useState(1);
+  const [seasonPage, setSeasonPage] = React.useState(1);
+  const pageSize = 20;
 
   const seasonsQuery = useQuery({
-    queryKey: queryKeys.seasons,
-    queryFn: () => adminApi.getSeasons(),
+    queryKey: queryKeys.seasons(seasonPage, 100),
+    queryFn: () => adminApi.getSeasons({ page: seasonPage, pageSize: 100 }),
   });
 
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
@@ -147,8 +150,8 @@ export default function TournamentListPage() {
     : undefined;
 
   React.useEffect(() => {
-    if (seasonsQuery.data?.[0]) {
-      setSeasonId(seasonsQuery.data[0].id);
+    if (seasonsQuery.data?.items?.[0]) {
+      setSeasonId(seasonsQuery.data.items[0].id);
     }
   }, [seasonsQuery.data]);
 
@@ -161,8 +164,9 @@ export default function TournamentListPage() {
   }, [filterGender, filterSeasonId, filterStatus]);
 
   const tournamentsQuery = useQuery({
-    queryKey: queryKeys.tournaments(activeFilters),
-    queryFn: () => adminApi.getTournaments(activeFilters),
+    queryKey: queryKeys.tournaments({ ...activeFilters, page, pageSize }),
+    queryFn: () =>
+      adminApi.getTournaments({ ...activeFilters, page, pageSize }),
   });
 
   const refresh = () => {
@@ -292,7 +296,7 @@ export default function TournamentListPage() {
         title="Tournaments Unavailable"
         description="Failed to load tournament data."
         onRetry={() => {
-          void queryClient.invalidateQueries({ queryKey: queryKeys.seasons });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.seasons() });
           void queryClient.invalidateQueries({
             queryKey: queryKeys.tournamentsRoot,
           });
@@ -326,7 +330,7 @@ export default function TournamentListPage() {
           disabled={isPending}
         >
           <NativeSelectOption value="all">All seasons</NativeSelectOption>
-          {(seasonsQuery.data ?? []).map((season) => (
+          {(seasonsQuery.data?.items ?? []).map((season) => (
             <NativeSelectOption key={`filter-${season.id}`} value={season.id}>
               {season.year} - {season.name}
             </NativeSelectOption>
@@ -375,7 +379,7 @@ export default function TournamentListPage() {
       </div>
 
       <EntityTable
-        rows={tournamentsQuery.data ?? []}
+        rows={tournamentsQuery.data?.items ?? []}
         getRowKey={(row) => row.id}
         columns={[
           {
@@ -469,7 +473,7 @@ export default function TournamentListPage() {
         ]}
       />
 
-      {(tournamentsQuery.data ?? []).length === 0 ? (
+      {(tournamentsQuery.data?.items.length ?? 0) === 0 ? (
         <QueryStateCard
           state="empty"
           title="No Tournaments Found"
@@ -509,7 +513,7 @@ export default function TournamentListPage() {
                 onChange={(event) => setSeasonId(event.target.value)}
                 disabled={createMutation.isPending}
               >
-                {(seasonsQuery.data ?? []).map((season) => (
+                {(seasonsQuery.data?.items ?? []).map((season) => (
                   <NativeSelectOption key={season.id} value={season.id}>
                     {season.year} - {season.name}
                   </NativeSelectOption>

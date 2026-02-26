@@ -2,6 +2,8 @@ import type { AdminApi } from "~/lib/api/contracts";
 import { httpClient } from "~/lib/api/client";
 import type {
   AuditLog,
+  AuditLogFilters,
+  AdminOverview,
   BracketData,
   CompleteMatchInput,
   CreateLeagueInput,
@@ -50,8 +52,15 @@ export class HttpAdminApi implements AdminApi {
     await httpClient.post("/admin/auth/logout");
   }
 
-  async getSeasons() {
-    const { data } = await httpClient.get<Season[]>("/admin/seasons");
+  async getSeasons(params?: PaginationParams) {
+    const { data } = await httpClient.get<Paginated<Season>>("/admin/seasons", {
+      params,
+    });
+    return data;
+  }
+
+  async getOverview() {
+    const { data } = await httpClient.get<AdminOverview>("/admin/overview");
     return data;
   }
 
@@ -68,10 +77,13 @@ export class HttpAdminApi implements AdminApi {
     return data;
   }
 
-  async getTournaments(filters?: TournamentFilters) {
-    const { data } = await httpClient.get<Tournament[]>("/admin/tournaments", {
-      params: filters,
-    });
+  async getTournaments(filters?: TournamentFilters & PaginationParams) {
+    const { data } = await httpClient.get<Paginated<Tournament>>(
+      "/admin/tournaments",
+      {
+        params: filters,
+      },
+    );
     return data;
   }
 
@@ -216,8 +228,10 @@ export class HttpAdminApi implements AdminApi {
     return data;
   }
 
-  async getLeagues() {
-    const { data } = await httpClient.get<League[]>("/admin/leagues");
+  async getLeagues(params?: PaginationParams) {
+    const { data } = await httpClient.get<Paginated<League>>("/admin/leagues", {
+      params,
+    });
     return data;
   }
 
@@ -248,8 +262,11 @@ export class HttpAdminApi implements AdminApi {
     return data;
   }
 
-  async getWalletPacks() {
-    const { data } = await httpClient.get<WalletPack[]>("/admin/wallet/packs");
+  async getWalletPacks(params?: PaginationParams) {
+    const { data } = await httpClient.get<Paginated<WalletPack>>(
+      "/admin/wallet/packs",
+      { params },
+    );
     return data;
   }
 
@@ -296,9 +313,10 @@ export class HttpAdminApi implements AdminApi {
     return data;
   }
 
-  async getNotificationCampaigns() {
-    const { data } = await httpClient.get<NotificationCampaign[]>(
+  async getNotificationCampaigns(params?: PaginationParams) {
+    const { data } = await httpClient.get<Paginated<NotificationCampaign>>(
       "/admin/notifications/campaigns",
+      { params },
     );
     return data;
   }
@@ -318,7 +336,7 @@ export class HttpAdminApi implements AdminApi {
     return data;
   }
 
-  async getAuditLogs(params?: PaginationParams) {
+  async getAuditLogs(params?: AuditLogFilters) {
     const { data } = await httpClient.get<Paginated<AuditLog>>(
       "/admin/audit-logs",
       {

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { env } from "~/lib/env";
-import { getSessionToken } from "~/lib/auth/session";
+import { clearSession, getSessionToken } from "~/lib/auth/session";
 
 export class ApiError extends Error {
   code: string;
@@ -26,6 +26,30 @@ export const httpClient = axios.create({
   baseURL: env.VITE_API_BASE_URL,
   timeout: env.VITE_API_TIMEOUT_MS,
 });
+
+function shouldHandleAuthFailure(url: string | undefined): boolean {
+  if (!url) {
+    return true;
+  }
+
+  return !(
+    url.includes("/admin/auth/login") || url.includes("/admin/auth/logout")
+  );
+}
+
+function handleAuthFailure() {
+  clearSession();
+  if (typeof window === "undefined") {
+    return;
+  }
+  if (window.location.pathname.startsWith("/login")) {
+    return;
+  }
+  const redirect = encodeURIComponent(
+    window.location.pathname + window.location.search,
+  );
+  window.location.assign(`/login?redirect=${redirect}`);
+}
 
 httpClient.interceptors.request.use((config) => {
   const token = getSessionToken();
@@ -64,6 +88,14 @@ httpClient.interceptors.response.use(
           : undefined;
       const traceId =
         typeof envelope?.traceId === "string" ? envelope.traceId : undefined;
+
+      const status = error.response?.status;
+      if (
+        (status === 401 || status === 403) &&
+        shouldHandleAuthFailure(error.config?.url)
+      ) {
+        handleAuthFailure();
+      }
 
       return Promise.reject(new ApiError(message, code, details, traceId));
     }
