@@ -1,5 +1,4 @@
 import axios from "axios";
-
 import { env } from "~/lib/env";
 import { clearSession, getSessionToken } from "~/lib/auth/session";
 
