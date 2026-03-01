@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { DatePickerField } from "~/components/ui/date-picker";
 import { HttpAdminApi } from "~/lib/api/http-admin-api";
 import type { AuditLog } from "~/lib/api/types";
 
@@ -243,29 +244,31 @@ export default function AuditLogsPage() {
           <label className="text-sm text-muted-foreground whitespace-nowrap">
             From
           </label>
-          <Input
-            type="date"
-            className="w-40"
-            value={fromDate}
-            onChange={(e) => {
-              setFromDate(e.target.value);
-              setPagination((p) => ({ ...p, pageIndex: 0 }));
-            }}
-          />
+          <div className="w-44">
+            <DatePickerField
+              value={fromDate}
+              onChange={(v) => {
+                setFromDate(v);
+                setPagination((p) => ({ ...p, pageIndex: 0 }));
+              }}
+              placeholder="Start date"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground whitespace-nowrap">
             To
           </label>
-          <Input
-            type="date"
-            className="w-40"
-            value={toDate}
-            onChange={(e) => {
-              setToDate(e.target.value);
-              setPagination((p) => ({ ...p, pageIndex: 0 }));
-            }}
-          />
+          <div className="w-44">
+            <DatePickerField
+              value={toDate}
+              onChange={(v) => {
+                setToDate(v);
+                setPagination((p) => ({ ...p, pageIndex: 0 }));
+              }}
+              placeholder="End date"
+            />
+          </div>
         </div>
         {(rawEntity || fromDate || toDate) && (
           <Button

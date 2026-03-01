@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
@@ -13,7 +13,7 @@ import {
   type PaginationState,
 } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { PlusIcon, EyeIcon } from "lucide-react";
+import { PlusIcon, EyeIcon, PencilIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
@@ -46,6 +46,10 @@ import {
   FieldGroup,
   FieldLabel,
 } from "~/components/ui/field";
+import {
+  DatePickerField,
+  DateTimePickerField,
+} from "~/components/ui/date-picker";
 import { HttpAdminApi } from "~/lib/api/http-admin-api";
 import type {
   Championship,
@@ -88,6 +92,7 @@ export function meta() {
 export default function TournamentsPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Tournament | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -132,7 +137,7 @@ export default function TournamentsPage() {
       location: string;
       startDate: string;
       endDate: string;
-      lineupLockAt: string;
+      lineupLockAt?: string;
     }) => adminApi.createTournament(input),
     onSuccess: () => {
       toast.success("Tournament created");
@@ -141,6 +146,27 @@ export default function TournamentsPage() {
     },
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Create failed"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      ...input
+    }: {
+      id: string;
+      championshipId: string;
+      location: string;
+      startDate: string;
+      endDate: string;
+      lineupLockAt?: string;
+    }) => adminApi.updateTournament(id, input),
+    onSuccess: () => {
+      toast.success("Tournament updated");
+      void queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      setOpen(false);
+    },
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Update failed"),
   });
 
   const form = useForm({
@@ -152,12 +178,53 @@ export default function TournamentsPage() {
       lineupLockAt: "",
     },
     onSubmit: async ({ value }) => {
-      await createMutation.mutateAsync({
+      const payload = {
         ...value,
         lineupLockAt: value.lineupLockAt || undefined,
-      } as never);
+      };
+      if (editing) {
+        await updateMutation.mutateAsync({ id: editing._id, ...payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
     },
   });
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  function openCreate() {
+    setEditing(null);
+    form.reset({
+      championshipId: championships[0]?._id ?? "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      lineupLockAt: "",
+    });
+    setOpen(true);
+  }
+
+  function openEdit(item: Tournament) {
+    setEditing(item);
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    if (open && editing) {
+      form.reset({
+        championshipId:
+          typeof editing.championshipId === "object"
+            ? editing.championshipId._id
+            : editing.championshipId,
+        location: editing.location,
+        startDate: editing.startDate ? editing.startDate.slice(0, 10) : "",
+        endDate: editing.endDate ? editing.endDate.slice(0, 10) : "",
+        lineupLockAt: editing.lineupLockAt
+          ? editing.lineupLockAt.slice(0, 16)
+          : "",
+      });
+    }
+  }, [open, editing]);
 
   const columns = [
     columnHelper.accessor("location", {
@@ -192,14 +259,22 @@ export default function TournamentsPage() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          render={<Link to={`/admin/tournaments/${row.original._id}`} />}
-        >
-          <EyeIcon className="size-4" />
-          View
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openEdit(row.original)}
+          >
+            <PencilIcon className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            render={<Link to={`/admin/tournaments/${row.original._id}`} />}
+          >
+            <EyeIcon className="size-4" />
+          </Button>
+        </div>
       ),
     }),
   ];
@@ -225,27 +300,21 @@ export default function TournamentsPage() {
           open={open}
           onOpenChange={(o) => {
             setOpen(o);
-            if (!o) form.reset();
+            if (!o) {
+              setEditing(null);
+              form.reset();
+            }
           }}
         >
-          <Button
-            onClick={() => {
-              form.reset({
-                championshipId: championships[0]?._id ?? "",
-                location: "",
-                startDate: "",
-                endDate: "",
-                lineupLockAt: "",
-              });
-              setOpen(true);
-            }}
-          >
+          <Button onClick={openCreate}>
             <PlusIcon className="size-4" />
             New Tournament
           </Button>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>New Tournament</DialogTitle>
+              <DialogTitle>
+                {editing ? "Edit Tournament" : "New Tournament"}
+              </DialogTitle>
             </DialogHeader>
             <form
               onSubmit={(e) => {
@@ -275,7 +344,18 @@ export default function TournamentsPage() {
                         onValueChange={(v) => field.handleChange(v ?? "")}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select championship" />
+                          <SelectValue placeholder="Select championship">
+                            {(value) => {
+                              if (value == null || value === "")
+                                return undefined;
+                              const c = championships.find(
+                                (ch) => ch._id === String(value),
+                              );
+                              return c
+                                ? `${c.name} (${c.seasonYear})`
+                                : "Select championship";
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {championships.map((c) => (
@@ -340,13 +420,12 @@ export default function TournamentsPage() {
                           field.state.meta.errors.length > 0
                         }
                       >
-                        <FieldLabel htmlFor={field.name}>Start Date</FieldLabel>
-                        <Input
-                          id={field.name}
-                          type="date"
+                        <FieldLabel>Start Date</FieldLabel>
+                        <DatePickerField
                           value={field.state.value}
+                          onChange={field.handleChange}
                           onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Pick start date"
                         />
                         <FieldError
                           errors={field.state.meta.errors.map((e) => ({
@@ -371,13 +450,12 @@ export default function TournamentsPage() {
                           field.state.meta.errors.length > 0
                         }
                       >
-                        <FieldLabel htmlFor={field.name}>End Date</FieldLabel>
-                        <Input
-                          id={field.name}
-                          type="date"
+                        <FieldLabel>End Date</FieldLabel>
+                        <DatePickerField
                           value={field.state.value}
+                          onChange={field.handleChange}
                           onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Pick end date"
                         />
                         <FieldError
                           errors={field.state.meta.errors.map((e) => ({
@@ -392,15 +470,12 @@ export default function TournamentsPage() {
                 <form.Field name="lineupLockAt">
                   {(field) => (
                     <Field>
-                      <FieldLabel htmlFor={field.name}>
-                        Lineup Lock Date (optional)
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        type="datetime-local"
+                      <FieldLabel>Lineup Lock Date (optional)</FieldLabel>
+                      <DateTimePickerField
                         value={field.state.value}
+                        onChange={field.handleChange}
                         onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Pick lock date and time"
                       />
                     </Field>
                   )}
@@ -412,13 +487,13 @@ export default function TournamentsPage() {
                   {([canSubmit, isSubmitting]) => (
                     <Button
                       type="submit"
-                      disabled={
-                        !canSubmit || isSubmitting || createMutation.isPending
-                      }
+                      disabled={!canSubmit || isSubmitting || isPending}
                     >
-                      {isSubmitting || createMutation.isPending
-                        ? "Creating…"
-                        : "Create"}
+                      {isSubmitting || isPending
+                        ? "Saving…"
+                        : editing
+                          ? "Save changes"
+                          : "Create"}
                     </Button>
                   )}
                 </form.Subscribe>
@@ -438,7 +513,13 @@ export default function TournamentsPage() {
           }}
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="All statuses" />
+            <SelectValue placeholder="All statuses">
+              {(value) =>
+                value == null || value === "all"
+                  ? "All Statuses"
+                  : (STATUS_LABEL[value as TournamentStatus] ?? value)
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
@@ -458,7 +539,14 @@ export default function TournamentsPage() {
           }}
         >
           <SelectTrigger className="w-52">
-            <SelectValue placeholder="All championships" />
+            <SelectValue placeholder="All championships">
+              {(value) => {
+                if (value == null || value === "all")
+                  return "All Championships";
+                const c = championships.find((ch) => ch._id === String(value));
+                return c ? `${c.name} (${c.seasonYear})` : "All championships";
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Championships</SelectItem>

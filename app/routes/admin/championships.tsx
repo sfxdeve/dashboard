@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import {
@@ -119,13 +119,18 @@ export default function ChampionshipsPage() {
 
   function openEdit(item: Championship) {
     setEditing(item);
-    form.reset({
-      name: item.name,
-      gender: item.gender,
-      seasonYear: item.seasonYear,
-    });
     setOpen(true);
   }
+
+  useEffect(() => {
+    if (open && editing) {
+      form.reset({
+        name: editing.name,
+        gender: editing.gender,
+        seasonYear: editing.seasonYear,
+      });
+    }
+  }, [open, editing]);
 
   const columns = [
     columnHelper.accessor("name", {
@@ -182,7 +187,10 @@ export default function ChampionshipsPage() {
           open={open}
           onOpenChange={(o) => {
             setOpen(o);
-            if (!o) form.reset();
+            if (!o) {
+              setEditing(null);
+              form.reset();
+            }
           }}
         >
           <Button onClick={openCreate}>
@@ -243,7 +251,15 @@ export default function ChampionshipsPage() {
                         onValueChange={(v) => field.handleChange(v as Gender)}
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select gender">
+                            {(value) =>
+                              value === "M"
+                                ? "Men"
+                                : value === "F"
+                                  ? "Women"
+                                  : undefined
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="M">Men</SelectItem>

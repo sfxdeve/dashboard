@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router";
+import { Outlet, NavLink, useNavigate, useMatch } from "react-router";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
@@ -27,7 +27,6 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { Separator } from "~/components/ui/separator";
-import { Button } from "~/components/ui/button";
 import { useSession } from "~/hooks/use-session";
 import { clearSession } from "~/lib/auth/session";
 import { HttpAdminApi } from "~/lib/api/http-admin-api";
@@ -43,6 +42,19 @@ const NAV_ITEMS = [
   { to: "/admin/credits", label: "Credits", icon: CreditCard },
   { to: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
 ];
+
+function NavItem({ item }: { item: (typeof NAV_ITEMS)[number] }) {
+  const match = useMatch({ path: item.to, end: item.end ?? false });
+  return (
+    <SidebarMenuButton
+      isActive={!!match}
+      render={<NavLink to={item.to} end={item.end} />}
+    >
+      <item.icon />
+      <span>{item.label}</span>
+    </SidebarMenuButton>
+  );
+}
 
 export function meta() {
   return [{ title: "FantaBeach Admin" }];
@@ -80,7 +92,11 @@ export default function AdminLayout() {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" className="font-semibold">
+              <SidebarMenuButton
+                size="lg"
+                className="font-semibold"
+                render={<NavLink to="/admin" end />}
+              >
                 <Trophy className="size-5" />
                 <span>FantaBeach</span>
               </SidebarMenuButton>
@@ -95,13 +111,7 @@ export default function AdminLayout() {
               <SidebarMenu>
                 {NAV_ITEMS.map((item) => (
                   <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton
-                      tooltip={item.label}
-                      render={<NavLink to={item.to} end={item.end} />}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
+                    <NavItem item={item} />
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -131,15 +141,6 @@ export default function AdminLayout() {
           <span className="text-sm text-muted-foreground">
             {session.user.email}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="ml-auto"
-            onClick={() => void handleLogout()}
-          >
-            <LogOut className="size-4" />
-            Sign out
-          </Button>
         </header>
 
         <div className="flex-1 p-6">

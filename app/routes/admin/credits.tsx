@@ -56,6 +56,13 @@ const TX_TYPE_VARIANT: Record<
   REFUND: "outline",
 };
 
+const TX_TYPE_LABEL: Record<CreditTransactionType, string> = {
+  PURCHASE: "Purchase",
+  BONUS: "Bonus",
+  SPEND: "Spend",
+  REFUND: "Refund",
+};
+
 // ── Packs Tab ─────────────────────────────────────────────────────────────
 
 const packColumnHelper = createColumnHelper<CreditPack>();
@@ -384,7 +391,7 @@ function TransactionsTab() {
       header: "Type",
       cell: (info) => (
         <Badge variant={TX_TYPE_VARIANT[info.getValue()]}>
-          {info.getValue()}
+          {TX_TYPE_LABEL[info.getValue()]}
         </Badge>
       ),
     }),

@@ -35,6 +35,14 @@ const STATUS_VARIANT: Record<
   COMPLETED: "outline",
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  UPCOMING: "Upcoming",
+  REGISTRATION_OPEN: "Open",
+  LOCKED: "Locked",
+  ONGOING: "Ongoing",
+  COMPLETED: "Completed",
+};
+
 const columnHelper = createColumnHelper<Tournament>();
 
 const columns = [
@@ -46,7 +54,7 @@ const columns = [
     header: "Status",
     cell: (info) => (
       <Badge variant={STATUS_VARIANT[info.getValue()] ?? "outline"}>
-        {info.getValue().replace("_", " ")}
+        {STATUS_LABEL[info.getValue()] ?? info.getValue()}
       </Badge>
     ),
   }),

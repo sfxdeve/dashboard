@@ -50,6 +50,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "~/components/ui/field";
+import { DateTimePickerField } from "~/components/ui/date-picker";
 import { HttpAdminApi } from "~/lib/api/http-admin-api";
 import type {
   Athlete,
@@ -276,7 +277,18 @@ function PairsTab({
                         onValueChange={(v) => field.handleChange(v ?? "")}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select athlete" />
+                          <SelectValue placeholder="Select athlete">
+                            {(value) => {
+                              if (value == null || value === "")
+                                return undefined;
+                              const a = athletes.find(
+                                (x) => x._id === String(value),
+                              );
+                              return a
+                                ? `${a.firstName} ${a.lastName}`
+                                : "Select athlete";
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {athletes.map((a) => (
@@ -314,7 +326,18 @@ function PairsTab({
                         onValueChange={(v) => field.handleChange(v ?? "")}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select athlete" />
+                          <SelectValue placeholder="Select athlete">
+                            {(value) => {
+                              if (value == null || value === "")
+                                return undefined;
+                              const a = athletes.find(
+                                (x) => x._id === String(value),
+                              );
+                              return a
+                                ? `${a.firstName} ${a.lastName}`
+                                : "Select athlete";
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {athletes.map((a) => (
@@ -344,7 +367,14 @@ function PairsTab({
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select entry status">
+                            {(value) =>
+                              value != null && value !== ""
+                                ? (ENTRY_STATUS_LABEL[value as EntryStatus] ??
+                                  value)
+                                : undefined
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(ENTRY_STATUS_LABEL).map(
@@ -583,7 +613,16 @@ function MatchEditDialog({
                 onValueChange={(v) => field.handleChange(v ?? "")}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select winner" />
+                  <SelectValue placeholder="Select winner">
+                    {(value) => {
+                      if (value == null || value === "") return undefined;
+                      if (value === pairAId && pairAObj)
+                        return `A: ${pairLabel(pairAObj)}`;
+                      if (value === pairBId && pairBObj)
+                        return `B: ${pairLabel(pairBObj)}`;
+                      return "Select winner";
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {pairAObj && (
@@ -613,7 +652,13 @@ function MatchEditDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select status">
+                    {(value) =>
+                      value != null && value !== ""
+                        ? (MATCH_STATUS_LABEL[value as MatchStatus] ?? value)
+                        : undefined
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(MATCH_STATUS_LABEL).map(([value, label]) => (
@@ -841,7 +886,14 @@ function MatchesTab({
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select round">
+                            {(value) =>
+                              value != null && value !== ""
+                                ? (MATCH_ROUND_LABEL[value as MatchRound] ??
+                                  value)
+                                : undefined
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(MATCH_ROUND_LABEL).map(
@@ -876,7 +928,16 @@ function MatchesTab({
                         onValueChange={(v) => field.handleChange(v ?? "")}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select pair" />
+                          <SelectValue placeholder="Select pair">
+                            {(value) => {
+                              if (value == null || value === "")
+                                return undefined;
+                              const p = pairs.find(
+                                (x) => x._id === String(value),
+                              );
+                              return p ? pairLabel(p) : "Select pair";
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {pairs.map((p) => (
@@ -914,7 +975,16 @@ function MatchesTab({
                         onValueChange={(v) => field.handleChange(v ?? "")}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select pair" />
+                          <SelectValue placeholder="Select pair">
+                            {(value) => {
+                              if (value == null || value === "")
+                                return undefined;
+                              const p = pairs.find(
+                                (x) => x._id === String(value),
+                              );
+                              return p ? pairLabel(p) : "Select pair";
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {pairs.map((p) => (
@@ -936,15 +1006,12 @@ function MatchesTab({
                 <createForm.Field name="scheduledAt">
                   {(field) => (
                     <Field>
-                      <FieldLabel htmlFor={field.name}>
-                        Scheduled At (optional)
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        type="datetime-local"
+                      <FieldLabel>Scheduled At (optional)</FieldLabel>
+                      <DateTimePickerField
                         value={field.state.value}
+                        onChange={field.handleChange}
                         onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Pick scheduled date and time"
                       />
                     </Field>
                   )}

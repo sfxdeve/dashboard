@@ -61,6 +61,11 @@ const TYPE_VARIANT: Record<LeagueType, "default" | "outline"> = {
   PRIVATE: "outline",
 };
 
+const TYPE_LABEL: Record<LeagueType, string> = {
+  PUBLIC: "Public",
+  PRIVATE: "Private",
+};
+
 const STATUS_VARIANT: Record<
   LeagueStatus,
   "default" | "secondary" | "outline"
@@ -68,6 +73,12 @@ const STATUS_VARIANT: Record<
   OPEN: "secondary",
   ONGOING: "default",
   COMPLETED: "outline",
+};
+
+const STATUS_LABEL: Record<LeagueStatus, string> = {
+  OPEN: "Open",
+  ONGOING: "Ongoing",
+  COMPLETED: "Completed",
 };
 
 function getChampionshipName(c: string | Championship): string {
@@ -176,7 +187,9 @@ export default function LeaguesPage() {
     columnHelper.accessor("type", {
       header: "Type",
       cell: (info) => (
-        <Badge variant={TYPE_VARIANT[info.getValue()]}>{info.getValue()}</Badge>
+        <Badge variant={TYPE_VARIANT[info.getValue()]}>
+          {TYPE_LABEL[info.getValue()]}
+        </Badge>
       ),
     }),
     columnHelper.accessor("championshipId", {
@@ -199,7 +212,7 @@ export default function LeaguesPage() {
       header: "Status",
       cell: (info) => (
         <Badge variant={STATUS_VARIANT[info.getValue()]}>
-          {info.getValue()}
+          {STATUS_LABEL[info.getValue()]}
         </Badge>
       ),
     }),
@@ -315,7 +328,15 @@ export default function LeaguesPage() {
                           }
                         >
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select type">
+                              {(value) =>
+                                value === "PUBLIC"
+                                  ? "Public"
+                                  : value === "PRIVATE"
+                                    ? "Private"
+                                    : undefined
+                              }
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="PUBLIC">Public</SelectItem>
@@ -337,7 +358,15 @@ export default function LeaguesPage() {
                           }
                         >
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select ranking mode">
+                              {(value) =>
+                                value === "OVERALL"
+                                  ? "Overall"
+                                  : value === "HEAD_TO_HEAD"
+                                    ? "Head to Head"
+                                    : undefined
+                              }
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="OVERALL">Overall</SelectItem>
@@ -371,7 +400,18 @@ export default function LeaguesPage() {
                         onValueChange={(v) => field.handleChange(v ?? "")}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select championship" />
+                          <SelectValue placeholder="Select championship">
+                            {(value) => {
+                              if (value == null || value === "")
+                                return undefined;
+                              const c = championships.find(
+                                (ch) => ch._id === String(value),
+                              );
+                              return c
+                                ? `${c.name} (${c.seasonYear})`
+                                : "Select championship";
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {championships.map((c) => (
@@ -500,7 +540,15 @@ export default function LeaguesPage() {
                           onValueChange={(v) => field.handleChange(v ?? "")}
                         >
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select market">
+                              {(value) =>
+                                value === "true"
+                                  ? "Enabled"
+                                  : value === "false"
+                                    ? "Disabled"
+                                    : undefined
+                              }
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="true">Enabled</SelectItem>
@@ -589,7 +637,17 @@ export default function LeaguesPage() {
           }}
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="All types" />
+            <SelectValue placeholder="All types">
+              {(value) =>
+                value == null || value === "all"
+                  ? "All Types"
+                  : value === "PUBLIC"
+                    ? "Public"
+                    : value === "PRIVATE"
+                      ? "Private"
+                      : value
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
@@ -606,7 +664,13 @@ export default function LeaguesPage() {
           }}
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="All statuses" />
+            <SelectValue placeholder="All statuses">
+              {(value) =>
+                value == null || value === "all"
+                  ? "All Statuses"
+                  : (STATUS_LABEL[value as LeagueStatus] ?? value)
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
@@ -624,7 +688,14 @@ export default function LeaguesPage() {
           }}
         >
           <SelectTrigger className="w-52">
-            <SelectValue placeholder="All championships" />
+            <SelectValue placeholder="All championships">
+              {(value) => {
+                if (value == null || value === "all")
+                  return "All Championships";
+                const c = championships.find((ch) => ch._id === String(value));
+                return c ? `${c.name} (${c.seasonYear})` : "All championships";
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Championships</SelectItem>

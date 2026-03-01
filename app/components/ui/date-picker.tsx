@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -120,6 +120,120 @@ export function DateTimePicker() {
           </>
         ) : (
           <span>Pick date and time</span>
+        )}
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <Calendar mode="single" selected={date} onSelect={handleSelect} />
+        <div className="border-t p-3">
+          <label className="text-muted-foreground text-xs">Time</label>
+          <Input
+            type="time"
+            value={time}
+            onChange={handleTimeChange}
+            className="mt-1"
+          />
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/**
+ * Controlled date picker that works with string values in "yyyy-MM-dd" format.
+ * Designed for use with TanStack Form field.handleChange.
+ */
+export function DatePickerField({
+  value,
+  onChange,
+  onBlur,
+  placeholder = "Pick a date",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  placeholder?: string;
+}) {
+  const date = value ? parseISO(value) : undefined;
+
+  const handleSelect = (d: Date | undefined) => {
+    onChange(d ? format(d, "yyyy-MM-dd") : "");
+    onBlur?.();
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            data-empty={!date}
+            className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
+          />
+        }
+      >
+        <CalendarIcon className="size-4" />
+        {date ? format(date, "PPP") : <span>{placeholder}</span>}
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <Calendar mode="single" selected={date} onSelect={handleSelect} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/**
+ * Controlled date+time picker that works with string values in "yyyy-MM-dd'T'HH:mm" format.
+ * Designed for use with TanStack Form field.handleChange.
+ */
+export function DateTimePickerField({
+  value,
+  onChange,
+  onBlur,
+  placeholder = "Pick date and time",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  placeholder?: string;
+}) {
+  const [datePart, timePart] = value ? value.split("T") : ["", ""];
+  const date = datePart ? parseISO(datePart) : undefined;
+  const time = timePart || "00:00";
+
+  const handleSelect = (d: Date | undefined) => {
+    if (!d) {
+      onChange("");
+      return;
+    }
+    onChange(`${format(d, "yyyy-MM-dd")}T${time}`);
+    onBlur?.();
+  };
+
+  const handleTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const t = e.target.value;
+    if (date) {
+      onChange(`${format(date, "yyyy-MM-dd")}T${t}`);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            data-empty={!value}
+            className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
+          />
+        }
+      >
+        <CalendarIcon className="size-4" />
+        {date ? (
+          <>
+            {format(date, "PPP")} at {time}
+          </>
+        ) : (
+          <span>{placeholder}</span>
         )}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { useDebouncer } from "@tanstack/react-pacer";
@@ -193,22 +193,27 @@ export default function AthletesPage() {
 
   function openEdit(item: Athlete) {
     setEditing(item);
-    const champId =
-      typeof item.championshipId === "object"
-        ? item.championshipId._id
-        : item.championshipId;
-    form.reset({
-      firstName: item.firstName,
-      lastName: item.lastName,
-      gender: item.gender,
-      championshipId: champId,
-      pictureUrl: item.pictureUrl ?? "",
-      entryPoints: item.entryPoints,
-      globalPoints: item.globalPoints,
-      fantacoinCost: item.fantacoinCost,
-    });
     setOpen(true);
   }
+
+  useEffect(() => {
+    if (open && editing) {
+      const champId =
+        typeof editing.championshipId === "object"
+          ? editing.championshipId._id
+          : editing.championshipId;
+      form.reset({
+        firstName: editing.firstName,
+        lastName: editing.lastName,
+        gender: editing.gender,
+        championshipId: champId,
+        pictureUrl: editing.pictureUrl ?? "",
+        entryPoints: editing.entryPoints,
+        globalPoints: editing.globalPoints,
+        fantacoinCost: editing.fantacoinCost,
+      });
+    }
+  }, [open, editing]);
 
   const columns = [
     columnHelper.display({
@@ -286,7 +291,10 @@ export default function AthletesPage() {
           open={open}
           onOpenChange={(o) => {
             setOpen(o);
-            if (!o) form.reset();
+            if (!o) {
+              setEditing(null);
+              form.reset();
+            }
           }}
         >
           <Button onClick={openCreate}>
@@ -378,7 +386,15 @@ export default function AthletesPage() {
                         onValueChange={(v) => field.handleChange(v as Gender)}
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select gender">
+                            {(value) =>
+                              value === "M"
+                                ? "Men"
+                                : value === "F"
+                                  ? "Women"
+                                  : undefined
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="M">Men</SelectItem>
@@ -409,7 +425,18 @@ export default function AthletesPage() {
                         onValueChange={(v) => field.handleChange(v ?? "")}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select championship" />
+                          <SelectValue placeholder="Select championship">
+                            {(value) => {
+                              if (value == null || value === "")
+                                return undefined;
+                              const c = championships.find(
+                                (ch) => ch._id === String(value),
+                              );
+                              return c
+                                ? `${c.name} (${c.seasonYear})`
+                                : "Select championship";
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {championships.map((c) => (
@@ -518,7 +545,14 @@ export default function AthletesPage() {
           }}
         >
           <SelectTrigger className="w-52">
-            <SelectValue placeholder="All championships" />
+            <SelectValue placeholder="All championships">
+              {(value) => {
+                if (value == null || value === "all")
+                  return "All Championships";
+                const c = championships.find((ch) => ch._id === String(value));
+                return c ? `${c.name} (${c.seasonYear})` : "All championships";
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Championships</SelectItem>
