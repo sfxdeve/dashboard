@@ -2,12 +2,6 @@ import { useState } from "react";
 import { useParams, Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
 import { toast } from "sonner";
 import {
   ArrowLeftIcon,
@@ -126,8 +120,6 @@ function getChampionshipId(t: Tournament): string {
 
 // ── Pairs Tab ─────────────────────────────────────────────────────────────
 
-const pairColumnHelper = createColumnHelper<TournamentPair>();
-
 function PairsTab({
   tournamentId,
   championshipId,
@@ -190,46 +182,6 @@ function PairsTab({
         seedRank: value.seedRank ? Number(value.seedRank) : undefined,
       });
     },
-  });
-
-  const columns = [
-    pairColumnHelper.display({
-      id: "athletes",
-      header: "Pair",
-      cell: ({ row }) => (
-        <span className="font-medium">{pairLabel(row.original)}</span>
-      ),
-    }),
-    pairColumnHelper.accessor("entryStatus", {
-      header: "Entry",
-      cell: (info) => (
-        <Badge variant="outline">{ENTRY_STATUS_LABEL[info.getValue()]}</Badge>
-      ),
-    }),
-    pairColumnHelper.accessor("seedRank", {
-      header: "Seed",
-      cell: (info) => info.getValue() ?? "—",
-    }),
-    pairColumnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => removeMutation.mutate(row.original._id)}
-          disabled={removeMutation.isPending}
-        >
-          <Trash2Icon className="size-4 text-destructive" />
-        </Button>
-      ),
-    }),
-  ];
-
-  const table = useReactTable({
-    data: pairs,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   return (
@@ -434,47 +386,55 @@ function PairsTab({
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Pair</TableHead>
+              <TableHead>Entry</TableHead>
+              <TableHead>Seed</TableHead>
+              <TableHead />
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((_, j) => (
+                  {Array.from({ length: 4 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : pairs.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={4}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No pairs yet.
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+              pairs.map((pair) => (
+                <TableRow key={pair._id}>
+                  <TableCell className="font-medium">
+                    {pairLabel(pair)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {ENTRY_STATUS_LABEL[pair.entryStatus]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{pair.seedRank ?? "—"}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeMutation.mutate(pair._id)}
+                      disabled={removeMutation.isPending}
+                    >
+                      <Trash2Icon className="size-4 text-destructive" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -711,8 +671,6 @@ function MatchEditDialog({
 
 // ── Matches Tab ────────────────────────────────────────────────────────────
 
-const matchColumnHelper = createColumnHelper<Match>();
-
 function MatchesTab({
   tournamentId,
   pairs,
@@ -784,70 +742,6 @@ function MatchesTab({
     const found = pairs.find((p) => p._id === id);
     return found ? pairLabel(found) : id;
   }
-
-  const columns = [
-    matchColumnHelper.accessor("round", {
-      header: "Round",
-      cell: (info) => MATCH_ROUND_LABEL[info.getValue()],
-    }),
-    matchColumnHelper.display({
-      id: "pairA",
-      header: "Pair A",
-      cell: ({ row }) => (
-        <span className="text-sm">{matchPairName(row.original.pairAId)}</span>
-      ),
-    }),
-    matchColumnHelper.display({
-      id: "pairB",
-      header: "Pair B",
-      cell: ({ row }) => (
-        <span className="text-sm">{matchPairName(row.original.pairBId)}</span>
-      ),
-    }),
-    matchColumnHelper.display({
-      id: "score",
-      header: "Score",
-      cell: ({ row }) => (
-        <span className="font-mono text-sm">{formatScore(row.original)}</span>
-      ),
-    }),
-    matchColumnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => (
-        <Badge
-          variant={
-            info.getValue() === "COMPLETED" || info.getValue() === "CORRECTED"
-              ? "default"
-              : info.getValue() === "IN_PROGRESS"
-                ? "secondary"
-                : "outline"
-          }
-        >
-          {MATCH_STATUS_LABEL[info.getValue()]}
-        </Badge>
-      ),
-    }),
-    matchColumnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setEditMatch(row.original)}
-        >
-          <PencilIcon className="size-4" />
-          Edit
-        </Button>
-      ),
-    }),
-  ];
-
-  const table = useReactTable({
-    data: matches,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
 
   return (
     <div className="space-y-4">
@@ -1044,47 +938,72 @@ function MatchesTab({
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Round</TableHead>
+              <TableHead>Pair A</TableHead>
+              <TableHead>Pair B</TableHead>
+              <TableHead>Score</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead />
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : matches.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={6}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No matches yet.
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+              matches.map((match) => (
+                <TableRow key={match._id}>
+                  <TableCell>{MATCH_ROUND_LABEL[match.round]}</TableCell>
+                  <TableCell className="text-sm">
+                    {matchPairName(match.pairAId)}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {matchPairName(match.pairBId)}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {formatScore(match)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        match.status === "COMPLETED" ||
+                        match.status === "CORRECTED"
+                          ? "default"
+                          : match.status === "IN_PROGRESS"
+                            ? "secondary"
+                            : "outline"
+                      }
+                    >
+                      {MATCH_STATUS_LABEL[match.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditMatch(match)}
+                    >
+                      <PencilIcon className="size-4" />
+                      Edit
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}

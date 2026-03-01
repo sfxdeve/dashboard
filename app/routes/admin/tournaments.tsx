@@ -2,16 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  type SortingState,
-  type PaginationState,
-} from "@tanstack/react-table";
 import { toast } from "sonner";
 import { PlusIcon, EyeIcon, PencilIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -78,8 +68,6 @@ const STATUS_LABEL: Record<TournamentStatus, string> = {
   COMPLETED: "Completed",
 };
 
-const columnHelper = createColumnHelper<Tournament>();
-
 function getChampionshipName(c: string | Championship): string {
   if (typeof c === "object") return `${c.name} (${c.seasonYear})`;
   return c;
@@ -93,11 +81,7 @@ export default function TournamentsPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Tournament | null>(null);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 20,
-  });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [champFilter, setChampFilter] = useState<string>("all");
 
@@ -225,72 +209,6 @@ export default function TournamentsPage() {
       });
     }
   }, [open, editing]);
-
-  const columns = [
-    columnHelper.accessor("location", {
-      header: "Location",
-      cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("championshipId", {
-      header: "Championship",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground">
-          {getChampionshipName(info.getValue() as string | Championship)}
-        </span>
-      ),
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => (
-        <Badge variant={STATUS_VARIANT[info.getValue()]}>
-          {STATUS_LABEL[info.getValue()]}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("startDate", {
-      header: "Start",
-      cell: (info) => new Date(info.getValue()).toLocaleDateString(),
-    }),
-    columnHelper.accessor("endDate", {
-      header: "End",
-      cell: (info) => new Date(info.getValue()).toLocaleDateString(),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openEdit(row.original)}
-          >
-            <PencilIcon className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            render={<Link to={`/admin/tournaments/${row.original._id}`} />}
-          >
-            <EyeIcon className="size-4" />
-          </Button>
-        </div>
-      ),
-    }),
-  ];
-
-  const table = useReactTable({
-    data: tournaments,
-    columns,
-    state: { sorting, pagination },
-    onSortingChange: setSorting,
-    onPaginationChange: setPagination,
-    manualPagination: true,
-    pageCount: totalPages,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
 
   return (
     <div className="space-y-4">
@@ -562,47 +480,73 @@ export default function TournamentsPage() {
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Location</TableHead>
+              <TableHead>Championship</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Start</TableHead>
+              <TableHead>End</TableHead>
+              <TableHead />
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : tournaments.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={6}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No tournaments found.
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+              tournaments.map((t) => (
+                <TableRow key={t._id}>
+                  <TableCell className="font-medium">{t.location}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {getChampionshipName(
+                      t.championshipId as string | Championship,
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={STATUS_VARIANT[t.status]}>
+                      {STATUS_LABEL[t.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(t.startDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(t.endDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEdit(t)}
+                      >
+                        <PencilIcon className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        render={<Link to={`/admin/tournaments/${t._id}`} />}
+                      >
+                        <EyeIcon className="size-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -613,23 +557,27 @@ export default function TournamentsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Page {table.getState().pagination.pageIndex + 1} of {totalPages}
+            Page {pagination.pageIndex + 1} of {totalPages}
             {tournamentsData && ` · ${tournamentsData.meta.total} total`}
           </p>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() =>
+                setPagination((p) => ({ ...p, pageIndex: p.pageIndex - 1 }))
+              }
+              disabled={pagination.pageIndex === 0}
             >
               Previous
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() =>
+                setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
+              }
+              disabled={pagination.pageIndex >= totalPages - 1}
             >
               Next
             </Button>

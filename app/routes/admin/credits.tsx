@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  type PaginationState,
-} from "@tanstack/react-table";
 import { toast } from "sonner";
 import { PlusIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -65,8 +57,6 @@ const TX_TYPE_LABEL: Record<CreditTransactionType, string> = {
 
 // ── Packs Tab ─────────────────────────────────────────────────────────────
 
-const packColumnHelper = createColumnHelper<CreditPack>();
-
 function PacksTab() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -111,53 +101,6 @@ function PacksTab() {
         active: true,
       });
     },
-  });
-
-  const columns = [
-    packColumnHelper.accessor("name", {
-      header: "Name",
-      cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-    }),
-    packColumnHelper.accessor("credits", {
-      header: "Credits",
-      cell: (info) => info.getValue(),
-    }),
-    packColumnHelper.accessor("stripePriceId", {
-      header: "Stripe Price ID",
-      cell: (info) => (
-        <span className="font-mono text-xs text-muted-foreground">
-          {info.getValue()}
-        </span>
-      ),
-    }),
-    packColumnHelper.accessor("active", {
-      header: "Status",
-      cell: (info) => (
-        <Badge variant={info.getValue() ? "default" : "outline"}>
-          {info.getValue() ? "Active" : "Inactive"}
-        </Badge>
-      ),
-    }),
-    packColumnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => toggleMutation.mutate(row.original._id)}
-          disabled={toggleMutation.isPending}
-        >
-          {row.original.active ? "Deactivate" : "Activate"}
-        </Button>
-      ),
-    }),
-  ];
-
-  const table = useReactTable({
-    data: packs,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   return (
@@ -310,47 +253,57 @@ function PacksTab() {
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Credits</TableHead>
+              <TableHead>Stripe Price ID</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead />
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((_, j) => (
+                  {Array.from({ length: 5 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : packs.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={5}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No credit packs yet.
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+              packs.map((pack) => (
+                <TableRow key={pack._id}>
+                  <TableCell className="font-medium">{pack.name}</TableCell>
+                  <TableCell>{pack.credits}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {pack.stripePriceId}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={pack.active ? "default" : "outline"}>
+                      {pack.active ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleMutation.mutate(pack._id)}
+                      disabled={toggleMutation.isPending}
+                    >
+                      {pack.active ? "Deactivate" : "Activate"}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -363,13 +316,8 @@ function PacksTab() {
 
 // ── Transactions Tab ───────────────────────────────────────────────────────
 
-const txColumnHelper = createColumnHelper<CreditTransaction>();
-
 function TransactionsTab() {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 20,
-  });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const { data: txData, isLoading } = useQuery({
     queryKey: [
@@ -386,112 +334,70 @@ function TransactionsTab() {
   const transactions = txData?.items ?? [];
   const totalPages = txData?.meta.pages ?? 0;
 
-  const columns = [
-    txColumnHelper.accessor("type", {
-      header: "Type",
-      cell: (info) => (
-        <Badge variant={TX_TYPE_VARIANT[info.getValue()]}>
-          {TX_TYPE_LABEL[info.getValue()]}
-        </Badge>
-      ),
-    }),
-    txColumnHelper.accessor("source", {
-      header: "Source",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground">{info.getValue()}</span>
-      ),
-    }),
-    txColumnHelper.accessor("amount", {
-      header: "Amount",
-      cell: (info) => {
-        const v = info.getValue();
-        return (
-          <span
-            className={
-              v > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"
-            }
-          >
-            {v > 0 ? "+" : ""}
-            {v}
-          </span>
-        );
-      },
-    }),
-    txColumnHelper.accessor("balanceAfter", {
-      header: "Balance After",
-      cell: (info) => info.getValue(),
-    }),
-    txColumnHelper.accessor("walletId", {
-      header: "Wallet",
-      cell: (info) => (
-        <span className="font-mono text-xs text-muted-foreground">
-          {info.getValue().slice(-8)}
-        </span>
-      ),
-    }),
-    txColumnHelper.accessor("createdAt", {
-      header: "Date",
-      cell: (info) => new Date(info.getValue()).toLocaleString(),
-    }),
-  ];
-
-  const table = useReactTable({
-    data: transactions,
-    columns,
-    state: { pagination },
-    onPaginationChange: setPagination,
-    manualPagination: true,
-    pageCount: totalPages,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
-
   return (
     <div className="space-y-4">
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Type</TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Balance After</TableHead>
+              <TableHead>Wallet</TableHead>
+              <TableHead>Date</TableHead>
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : transactions.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={6}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No transactions found.
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+              transactions.map((tx) => (
+                <TableRow key={tx._id}>
+                  <TableCell>
+                    <Badge variant={TX_TYPE_VARIANT[tx.type]}>
+                      {TX_TYPE_LABEL[tx.type]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {tx.source}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={
+                        tx.amount > 0
+                          ? "text-green-600 font-medium"
+                          : "text-red-600 font-medium"
+                      }
+                    >
+                      {tx.amount > 0 ? "+" : ""}
+                      {tx.amount}
+                    </span>
+                  </TableCell>
+                  <TableCell>{tx.balanceAfter}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {tx.walletId.slice(-8)}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(tx.createdAt).toLocaleString()}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -502,23 +408,27 @@ function TransactionsTab() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Page {table.getState().pagination.pageIndex + 1} of {totalPages}
+            Page {pagination.pageIndex + 1} of {totalPages}
             {txData && ` · ${txData.meta.total} total`}
           </p>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() =>
+                setPagination((p) => ({ ...p, pageIndex: p.pageIndex - 1 }))
+              }
+              disabled={pagination.pageIndex === 0}
             >
               Previous
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() =>
+                setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
+              }
+              disabled={pagination.pageIndex >= totalPages - 1}
             >
               Next
             </Button>

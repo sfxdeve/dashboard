@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type SortingState,
-} from "@tanstack/react-table";
 import { toast } from "sonner";
 import { PlusIcon, PencilIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -48,8 +40,6 @@ import type { Championship, Gender } from "~/lib/api/types";
 
 const adminApi = new HttpAdminApi();
 
-const columnHelper = createColumnHelper<Championship>();
-
 export function meta() {
   return [{ title: "Championships — FantaBeach Admin" }];
 }
@@ -58,8 +48,6 @@ export default function ChampionshipsPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Championship | null>(null);
-  const [sorting, setSorting] = useState<SortingState>([]);
-
   const { data: championships = [], isLoading } = useQuery({
     queryKey: ["championships"],
     queryFn: () => adminApi.getChampionships(),
@@ -131,51 +119,6 @@ export default function ChampionshipsPage() {
       });
     }
   }, [open, editing]);
-
-  const columns = [
-    columnHelper.accessor("name", {
-      header: "Name",
-      cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("gender", {
-      header: "Gender",
-      cell: (info) => (
-        <Badge variant="outline">
-          {info.getValue() === "M" ? "Men" : "Women"}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("seasonYear", {
-      header: "Season Year",
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("createdAt", {
-      header: "Created",
-      cell: (info) => new Date(info.getValue()).toLocaleDateString(),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => openEdit(row.original)}
-        >
-          <PencilIcon className="size-4" />
-        </Button>
-      ),
-    }),
-  ];
-
-  const table = useReactTable({
-    data: championships,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -330,53 +273,56 @@ export default function ChampionshipsPage() {
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead
-                    key={h.id}
-                    onClick={h.column.getToggleSortingHandler()}
-                    className={
-                      h.column.getCanSort() ? "cursor-pointer select-none" : ""
-                    }
-                  >
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Gender</TableHead>
+              <TableHead>Season Year</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead />
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((_, j) => (
+                  {Array.from({ length: 5 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : championships.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={5}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No championships yet. Create one to get started.
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+              championships.map((c) => (
+                <TableRow key={c._id}>
+                  <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {c.gender === "M" ? "Men" : "Women"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{c.seasonYear}</TableCell>
+                  <TableCell>
+                    {new Date(c.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEdit(c)}
+                    >
+                      <PencilIcon className="size-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}

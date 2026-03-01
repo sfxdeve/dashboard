@@ -1,12 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { Trophy, Calendar, Medal, Clock } from "lucide-react";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -20,7 +14,6 @@ import {
 } from "~/components/ui/table";
 import { Button } from "~/components/ui/button";
 import { HttpAdminApi } from "~/lib/api/http-admin-api";
-import type { Tournament } from "~/lib/api/types";
 
 const adminApi = new HttpAdminApi();
 
@@ -42,44 +35,6 @@ const STATUS_LABEL: Record<string, string> = {
   ONGOING: "Ongoing",
   COMPLETED: "Completed",
 };
-
-const columnHelper = createColumnHelper<Tournament>();
-
-const columns = [
-  columnHelper.accessor("location", {
-    header: "Location",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("status", {
-    header: "Status",
-    cell: (info) => (
-      <Badge variant={STATUS_VARIANT[info.getValue()] ?? "outline"}>
-        {STATUS_LABEL[info.getValue()] ?? info.getValue()}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("startDate", {
-    header: "Start Date",
-    cell: (info) => new Date(info.getValue()).toLocaleDateString(),
-  }),
-  columnHelper.accessor("endDate", {
-    header: "End Date",
-    cell: (info) => new Date(info.getValue()).toLocaleDateString(),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: "",
-    cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        render={<Link to={`/admin/tournaments/${row.original._id}`} />}
-      >
-        View
-      </Button>
-    ),
-  }),
-];
 
 export function meta() {
   return [{ title: "Overview — FantaBeach Admin" }];
@@ -108,12 +63,6 @@ export default function OverviewPage() {
   ).length;
 
   const recentTournaments = tournaments.slice(0, 8);
-
-  const table = useReactTable({
-    data: recentTournaments,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
 
   return (
     <div className="space-y-6">
@@ -151,47 +100,58 @@ export default function OverviewPage() {
         <div className="rounded-lg border">
           <Table>
             <TableHeader>
-              {table.getHeaderGroups().map((hg) => (
-                <TableRow key={hg.id}>
-                  {hg.headers.map((h) => (
-                    <TableHead key={h.id}>
-                      {flexRender(h.column.columnDef.header, h.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
+              <TableRow>
+                <TableHead>Location</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead />
+              </TableRow>
             </TableHeader>
             <TableBody>
               {loadingTournaments ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    {columns.map((_, j) => (
+                    {Array.from({ length: 5 }).map((_, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-full" />
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
-              ) : table.getRowModel().rows.length === 0 ? (
+              ) : recentTournaments.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
+                    colSpan={5}
                     className="h-24 text-center text-muted-foreground"
                   >
                     No tournaments yet.
                   </TableCell>
                 </TableRow>
               ) : (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
+                recentTournaments.map((t) => (
+                  <TableRow key={t._id}>
+                    <TableCell>{t.location}</TableCell>
+                    <TableCell>
+                      <Badge variant={STATUS_VARIANT[t.status] ?? "outline"}>
+                        {STATUS_LABEL[t.status] ?? t.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(t.startDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(t.endDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        render={<Link to={`/admin/tournaments/${t._id}`} />}
+                      >
+                        View
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}

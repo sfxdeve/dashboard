@@ -1,16 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  type SortingState,
-  type PaginationState,
-} from "@tanstack/react-table";
 import { toast } from "sonner";
 import { PlusIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -86,8 +76,6 @@ function getChampionshipName(c: string | Championship): string {
   return c;
 }
 
-const columnHelper = createColumnHelper<League>();
-
 export function meta() {
   return [{ title: "Leagues — FantaBeach Admin" }];
 }
@@ -95,11 +83,7 @@ export function meta() {
 export default function LeaguesPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 20,
-  });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [champFilter, setChampFilter] = useState<string>("all");
@@ -177,67 +161,6 @@ export default function LeaguesPage() {
         prize3rd: value.prize3rd || undefined,
       });
     },
-  });
-
-  const columns = [
-    columnHelper.accessor("name", {
-      header: "Name",
-      cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-    }),
-    columnHelper.accessor("type", {
-      header: "Type",
-      cell: (info) => (
-        <Badge variant={TYPE_VARIANT[info.getValue()]}>
-          {TYPE_LABEL[info.getValue()]}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("championshipId", {
-      header: "Championship",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground">
-          {getChampionshipName(info.getValue() as string | Championship)}
-        </span>
-      ),
-    }),
-    columnHelper.accessor("rankingMode", {
-      header: "Mode",
-      cell: (info) => (
-        <span className="text-sm">
-          {info.getValue() === "HEAD_TO_HEAD" ? "H2H" : "Overall"}
-        </span>
-      ),
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => (
-        <Badge variant={STATUS_VARIANT[info.getValue()]}>
-          {STATUS_LABEL[info.getValue()]}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("isOfficial", {
-      header: "Official",
-      cell: (info) =>
-        info.getValue() ? <Badge variant="secondary">Official</Badge> : null,
-    }),
-    columnHelper.accessor("initialBudget", {
-      header: "Budget",
-      cell: (info) => info.getValue(),
-    }),
-  ];
-
-  const table = useReactTable({
-    data: leagues,
-    columns,
-    state: { sorting, pagination },
-    onSortingChange: setSorting,
-    onPaginationChange: setPagination,
-    manualPagination: true,
-    pageCount: totalPages,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
@@ -711,47 +634,64 @@ export default function LeaguesPage() {
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Championship</TableHead>
+              <TableHead>Mode</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Official</TableHead>
+              <TableHead>Budget</TableHead>
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : leagues.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={7}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No leagues found.
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+              leagues.map((l) => (
+                <TableRow key={l._id}>
+                  <TableCell className="font-medium">{l.name}</TableCell>
+                  <TableCell>
+                    <Badge variant={TYPE_VARIANT[l.type]}>
+                      {TYPE_LABEL[l.type]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {getChampionshipName(
+                      l.championshipId as string | Championship,
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {l.rankingMode === "HEAD_TO_HEAD" ? "H2H" : "Overall"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={STATUS_VARIANT[l.status]}>
+                      {STATUS_LABEL[l.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {l.isOfficial ? (
+                      <Badge variant="secondary">Official</Badge>
+                    ) : null}
+                  </TableCell>
+                  <TableCell>{l.initialBudget}</TableCell>
                 </TableRow>
               ))
             )}
@@ -762,23 +702,27 @@ export default function LeaguesPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Page {table.getState().pagination.pageIndex + 1} of {totalPages}
+            Page {pagination.pageIndex + 1} of {totalPages}
             {leaguesData && ` · ${leaguesData.meta.total} total`}
           </p>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() =>
+                setPagination((p) => ({ ...p, pageIndex: p.pageIndex - 1 }))
+              }
+              disabled={pagination.pageIndex === 0}
             >
               Previous
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() =>
+                setPagination((p) => ({ ...p, pageIndex: p.pageIndex + 1 }))
+              }
+              disabled={pagination.pageIndex >= totalPages - 1}
             >
               Next
             </Button>
