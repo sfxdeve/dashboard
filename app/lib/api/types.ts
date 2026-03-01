@@ -336,7 +336,7 @@ export interface GrantCreditsInput {
 
 export interface AuditLog {
   _id: string;
-  adminId: string;
+  adminId: string | { _id: string; name: string; email: string };
   action: string;
   entity: string;
   entityId?: string;

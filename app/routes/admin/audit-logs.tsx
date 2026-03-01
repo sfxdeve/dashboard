@@ -25,6 +25,11 @@ import type { AuditLog } from "~/lib/api/types";
 
 const adminApi = new HttpAdminApi();
 
+function adminLabel(adminId: AuditLog["adminId"]): string {
+  if (typeof adminId === "object") return adminId.name;
+  return adminId.slice(-8);
+}
+
 function AuditDetailDialog({
   log,
   onClose,
@@ -56,7 +61,11 @@ function AuditDetailDialog({
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
                 Admin
               </p>
-              <p className="font-mono">{log.adminId}</p>
+              <p className="font-mono">
+                {typeof log.adminId === "object"
+                  ? `${log.adminId.name} (${log.adminId.email})`
+                  : log.adminId}
+              </p>
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
@@ -246,7 +255,7 @@ export default function AuditLogsPage() {
                     {new Date(log.createdAt).toLocaleString()}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
-                    {log.adminId.slice(-8)}
+                    {adminLabel(log.adminId)}
                   </TableCell>
                   <TableCell className="font-medium text-sm">
                     {log.action}
