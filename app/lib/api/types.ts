@@ -1,34 +1,64 @@
-export type Gender = "men" | "women";
+// ── Enums ─────────────────────────────────────────────────────
 
-export type SeasonStatus = "upcoming" | "active" | "closed";
+export type Gender = "M" | "F";
 
 export type TournamentStatus =
-  | "draft"
-  | "open"
-  | "entry_locked"
-  | "live"
-  | "completed"
-  | "archived";
+  | "UPCOMING"
+  | "REGISTRATION_OPEN"
+  | "LOCKED"
+  | "ONGOING"
+  | "COMPLETED";
 
-export type TournamentPhase = "qualification" | "pools" | "main_draw";
+export type EntryStatus =
+  | "DIRECT"
+  | "QUALIFICATION"
+  | "RESERVE_1"
+  | "RESERVE_2"
+  | "RESERVE_3";
 
-export type MatchStatus = "scheduled" | "live" | "completed" | "cancelled";
+export type MatchRound =
+  | "QUALIFICATION_R1"
+  | "QUALIFICATION_R2"
+  | "POOL"
+  | "R12"
+  | "QF"
+  | "SF"
+  | "FINAL"
+  | "THIRD_PLACE";
 
-export type EntryStatus = "pool" | "qualification" | "reserve";
+export type MatchStatus =
+  | "SCHEDULED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CORRECTED";
 
-export type LeagueMode = "overall" | "head_to_head";
+export type LeagueType = "PUBLIC" | "PRIVATE";
+export type LeagueStatus = "OPEN" | "ONGOING" | "COMPLETED";
+export type RankingMode = "OVERALL" | "HEAD_TO_HEAD";
 
-export type LeagueStatus = "active" | "paused" | "completed";
+export type CreditTransactionType = "PURCHASE" | "SPEND" | "BONUS" | "REFUND";
+export type CreditTransactionSource = "STRIPE" | "ADMIN" | "SYSTEM";
 
-export type PaymentProvider = "stripe";
+// ── Pagination ────────────────────────────────────────────────
 
-export type PaymentEventStatus = "received" | "verified" | "rejected";
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
 
-export type NotificationStatus = "draft" | "scheduled" | "sent";
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
 
-export type ScoringRunStatus = "running" | "completed" | "failed";
+export interface PagedResult<T> {
+  items: T[];
+  meta: PaginationMeta;
+}
 
-export type DayBucket = "friday" | "saturday" | "sunday";
+// ── API Error ─────────────────────────────────────────────────
 
 export interface ApiErrorEnvelope {
   code: string;
@@ -37,17 +67,7 @@ export interface ApiErrorEnvelope {
   traceId?: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pageSize?: number;
-}
-
-export interface Paginated<T> {
-  items: T[];
-  page: number;
-  pageSize: number;
-  total: number;
-}
+// ── Auth & Session ────────────────────────────────────────────
 
 export interface AdminUser {
   id: string;
@@ -62,360 +82,274 @@ export interface Session {
   expiresAt: string;
 }
 
-export interface Season {
-  id: string;
-  year: number;
-  name: string;
-  status: SeasonStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface TournamentPolicy {
-  rosterSize: string;
-  starterCount: string;
-  reserveCount: string;
-  lineupLockAt: string;
-  timezone: string;
-  noRetroactiveScoring: boolean;
-  genderIsolation: boolean;
-}
-
-export interface TournamentRegistration {
-  userId: string;
-  registeredAt: string;
-}
-
-export interface Tournament {
-  id: string;
-  seasonId: string;
-  name: string;
-  slug: string;
-  location: string;
-  gender: Gender;
-  isPublic: boolean;
-  status: TournamentStatus;
-  startDate: string;
-  endDate: string;
-  policy: TournamentPolicy;
-  entryListLocked: boolean;
-  lineupLocked: boolean;
-  bracketGeneratedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  registrations: TournamentRegistration[];
-}
-
-export interface Player {
-  id: string;
-  firstName: string;
-  lastName: string;
-  gender: Gender;
-  countryCode: string;
-  rankPoints: number;
-  status: "active" | "injured" | "inactive";
-}
-
-export interface TournamentPair {
-  id: string;
-  tournamentId: string;
-  playerIds: [string, string];
-  seed: number;
-  status: EntryStatus;
-}
-
-export interface EntryListItem {
-  id: string;
-  tournamentId: string;
-  pair: TournamentPair;
-  coach?: string;
-  ranking: number;
-  entryStatus: EntryStatus;
-  reserveOrder?: number;
-}
-
-export interface SetScore {
-  setNumber: string;
-  pairAScore: string;
-  pairBScore: string;
-}
-
-export interface Match {
-  id: string;
-  tournamentId: string;
-  phase: TournamentPhase;
-  day: DayBucket;
-  round: number;
-  slot: number;
-  status: MatchStatus;
-  bestOf: string;
-  pairAId: string;
-  pairBId: string;
-  setScores: SetScore[];
-  winnerPairId?: string;
-  scheduledAt: string;
-  completedAt?: string;
-}
-
-export interface BracketNode {
-  id: string;
-  tournamentId: string;
-  phase: TournamentPhase;
-  round: number;
-  slot: number;
-  matchId: string;
-  label: string;
-  pairAId?: string;
-  pairBId?: string;
-  winnerPairId?: string;
-}
-
-export interface BracketEdge {
-  id: string;
-  fromNodeId: string;
-  toNodeId: string;
-  outcome: "winner";
-}
-
-export interface BracketData {
-  tournamentId: string;
-  nodes: BracketNode[];
-  edges: BracketEdge[];
-  updatedAt: string;
-}
-
-export interface ScoringConfig {
-  tournamentId: string;
-  basePointMultiplier: number;
-  bonusWin20: number;
-  bonusWin21: number;
-  updatedAt: string;
-}
-
-export interface UserTournamentTeam {
-  id: string;
-  userId: string;
-  tournamentId: string;
-  rosterPlayerIds: string[];
-  starters: string[];
-  reserves: string[];
-  createdAt: string;
-}
-
-export interface UserScoreTotal {
-  userId: string;
-  totalPoints: number;
-  countedPlayers: string[];
-}
-
-export interface ScoringRun {
-  id: string;
-  tournamentId: string;
-  status: ScoringRunStatus;
-  triggeredBy: string;
-  startedAt: string;
-  finishedAt: string;
-  totalsByUser: UserScoreTotal[];
-}
-
-export interface LeaderboardRow {
-  id: string;
-  leagueId: string;
-  userId: string;
-  displayName: string;
-  rank: number;
-  totalPoints: number;
-  tieBreakerScore: number;
-  lastUpdated: string;
-}
-
-export interface League {
-  id: string;
-  seasonId: string;
-  name: string;
-  mode: LeagueMode;
-  status: LeagueStatus;
-  tieBreakers: string[];
-  updatedAt: string;
-}
-
-export interface WalletPack {
-  id: string;
-  name: string;
-  credits: number;
-  priceCents: number;
-  currency: string;
-  active: boolean;
-}
-
-export interface WalletTransaction {
-  id: string;
-  userId: string;
-  amountCredits: number;
-  direction: "credit" | "debit";
-  reason: string;
-  createdAt: string;
-}
-
-export interface PaymentEvent {
-  id: string;
-  provider: PaymentProvider;
-  externalId: string;
-  status: PaymentEventStatus;
-  receivedAt: string;
-  verifiedAt?: string;
-  payload: Record<string, unknown>;
-}
-
-export interface NotificationCampaign {
-  id: string;
-  title: string;
-  body: string;
-  audience: "all" | "active_users" | "season_users";
-  status: NotificationStatus;
-  scheduledAt?: string;
-  sentAt?: string;
-  createdAt: string;
-}
-
-export interface AuditLog {
-  id: string;
-  actorUserId: string;
-  action: string;
-  entityType: string;
-  entityId: string;
-  timestamp: string;
-  before?: unknown;
-  after?: unknown;
-}
-
-export interface AdminOverview {
-  activeTournaments: number;
-  lockedEntryLists: number;
-  pendingMatches: number;
-  completedMatches: number;
-  scoringRuns: number;
-  failedPaymentEvents: number;
-  tournaments: Array<{
-    id: string;
-    name: string;
-    gender: Gender;
-    status: TournamentStatus;
-    entryListLocked: boolean;
-    policy: {
-      lineupLockAt: string;
-      timezone: string;
-    };
-  }>;
-}
-
-export interface AuditLogFilters extends PaginationParams {
-  action?: string;
-  entityType?: string;
-  entityId?: string;
-  actorUserId?: string;
-  from?: string;
-  to?: string;
-}
-
 export interface LoginInput {
   email: string;
   password: string;
 }
 
-export interface CreateSeasonInput {
-  year: string;
+// ── Championship ──────────────────────────────────────────────
+
+export interface Championship {
+  _id: string;
   name: string;
+  gender: Gender;
+  seasonYear: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface UpdateSeasonInput {
-  name?: string;
-  status?: SeasonStatus;
+export interface CreateChampionshipInput {
+  name: string;
+  gender: Gender;
+  seasonYear: number;
 }
 
-export interface TournamentFilters {
-  seasonId?: string;
-  status?: TournamentStatus;
+export type UpdateChampionshipInput = Partial<CreateChampionshipInput>;
+
+// ── Athlete ───────────────────────────────────────────────────
+
+export interface Athlete {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  gender: Gender;
+  championshipId: string | Championship;
+  pictureUrl?: string;
+  entryPoints: number;
+  globalPoints: number;
+  averageFantasyScore: number;
+  fantacoinCost: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AthleteFilters extends PaginationParams {
+  championshipId?: string;
   gender?: Gender;
+  search?: string;
+}
+
+export interface CreateAthleteInput {
+  firstName: string;
+  lastName: string;
+  gender: Gender;
+  championshipId: string;
+  pictureUrl?: string;
+  entryPoints?: number;
+  globalPoints?: number;
+  fantacoinCost?: number;
+}
+
+export type UpdateAthleteInput = Partial<CreateAthleteInput>;
+
+// ── Tournament ────────────────────────────────────────────────
+
+export interface Tournament {
+  _id: string;
+  championshipId: string | Championship;
+  location: string;
+  startDate: string;
+  endDate: string;
+  status: TournamentStatus;
+  lineupLockAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TournamentFilters extends PaginationParams {
+  championshipId?: string;
+  status?: TournamentStatus;
+  year?: number;
 }
 
 export interface CreateTournamentInput {
-  seasonId: string;
-  name: string;
-  slug: string;
+  championshipId: string;
   location: string;
-  gender: Gender;
-  isPublic: boolean;
   startDate: string;
   endDate: string;
-  policy: TournamentPolicy;
+  lineupLockAt?: string;
 }
 
 export interface UpdateTournamentInput {
-  name?: string;
   location?: string;
+  startDate?: string;
+  endDate?: string;
   status?: TournamentStatus;
-  isPublic?: boolean;
-  policy?: Partial<TournamentPolicy>;
+  lineupLockAt?: string;
+}
+
+// ── TournamentPair ────────────────────────────────────────────
+
+export interface TournamentPair {
+  _id: string;
+  tournamentId: string;
+  athleteAId: string | Athlete;
+  athleteBId: string | Athlete;
+  entryStatus: EntryStatus;
+  seedRank?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePairInput {
+  athleteAId: string;
+  athleteBId: string;
+  entryStatus: EntryStatus;
+  seedRank?: number;
+}
+
+// ── Match ─────────────────────────────────────────────────────
+
+export interface Match {
+  _id: string;
+  tournamentId: string;
+  round: MatchRound;
+  pairAId: string | TournamentPair;
+  pairBId: string | TournamentPair;
+  scheduledAt?: string;
+  set1A?: number;
+  set1B?: number;
+  set2A?: number;
+  set2B?: number;
+  set3A?: number;
+  set3B?: number;
+  winnerPairId?: string;
+  status: MatchStatus;
+  isRetirement: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MatchFilters {
+  tournamentId?: string;
+  round?: MatchRound;
+  status?: MatchStatus;
 }
 
 export interface CreateMatchInput {
   tournamentId: string;
-  phase: TournamentPhase;
-  day: DayBucket;
-  round: number;
-  slot: number;
+  round: MatchRound;
   pairAId: string;
   pairBId: string;
-  scheduledAt: string;
+  scheduledAt?: string;
 }
 
 export interface UpdateMatchInput {
-  status?: MatchStatus;
-  setScores?: SetScore[];
   scheduledAt?: string;
-  day?: DayBucket;
+  set1A?: number;
+  set1B?: number;
+  set2A?: number;
+  set2B?: number;
+  set3A?: number;
+  set3B?: number;
+  winnerPairId?: string;
+  status?: MatchStatus;
+  isRetirement?: boolean;
+  reason?: string;
 }
 
-export interface CompleteMatchInput {
-  setScores: SetScore[];
+// ── League ────────────────────────────────────────────────────
+
+export interface League {
+  _id: string;
+  name: string;
+  type: LeagueType;
+  createdBy?: string;
+  isOfficial: boolean;
+  championshipId: string | Championship;
+  rankingMode: RankingMode;
+  rosterSize: number;
+  startersPerGameweek: number;
+  initialBudget: number;
+  marketEnabled: boolean;
+  status: LeagueStatus;
+  entryFee?: number;
+  prize1st?: string;
+  prize2nd?: string;
+  prize3rd?: string;
+  inviteCode?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface UpdateScoringConfigInput {
-  basePointMultiplier: string;
-  bonusWin20: string;
-  bonusWin21: string;
+export interface LeagueFilters extends PaginationParams {
+  type?: LeagueType;
+  status?: LeagueStatus;
+  championshipId?: string;
 }
 
 export interface CreateLeagueInput {
-  seasonId: string;
   name: string;
-  mode: LeagueMode;
+  type: LeagueType;
+  championshipId: string;
+  rankingMode: RankingMode;
+  rosterSize: number;
+  startersPerGameweek: number;
+  initialBudget: number;
+  marketEnabled?: boolean;
+  entryFee?: number;
+  prize1st?: string;
+  prize2nd?: string;
+  prize3rd?: string;
 }
 
-export interface UpdateLeagueInput {
-  name?: string;
-  status?: LeagueStatus;
-  tieBreakers?: string[];
-}
+// ── CreditPack ────────────────────────────────────────────────
 
-export interface CreateWalletPackInput {
+export interface CreditPack {
+  _id: string;
   name: string;
-  credits: string;
-  priceCents: string;
-  currency: string;
+  credits: number;
+  stripePriceId: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface UpdateWalletPackInput {
-  name?: string;
-  credits?: string;
-  priceCents?: string;
+export interface CreateCreditPackInput {
+  name: string;
+  credits: number;
+  stripePriceId: string;
   active?: boolean;
 }
 
-export interface CreateNotificationCampaignInput {
-  title: string;
-  body: string;
-  audience: NotificationCampaign["audience"];
-  scheduledAt?: string;
+// ── CreditTransaction ─────────────────────────────────────────
+
+export interface CreditTransaction {
+  _id: string;
+  walletId: string;
+  type: CreditTransactionType;
+  source: CreditTransactionSource;
+  amount: number;
+  balanceAfter: number;
+  meta?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GrantCreditsInput {
+  userId: string;
+  amount: number;
+  reason?: string;
+}
+
+// ── AuditLog ──────────────────────────────────────────────────
+
+export interface AuditLog {
+  _id: string;
+  adminId: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+  reason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuditLogFilters extends PaginationParams {
+  adminId?: string;
+  entity?: string;
+  from?: string;
+  to?: string;
 }

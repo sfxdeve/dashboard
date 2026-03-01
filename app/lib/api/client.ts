@@ -32,7 +32,7 @@ function shouldHandleAuthFailure(url: string | undefined): boolean {
   }
 
   return !(
-    url.includes("/admin/auth/login") || url.includes("/admin/auth/logout")
+    url.includes("/api/v1/auth/login") || url.includes("/api/v1/auth/logout")
   );
 }
 
@@ -60,7 +60,19 @@ httpClient.interceptors.request.use((config) => {
 });
 
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Unwrap backend envelope: { success, data: T } → T
+    // Paginated spread:        { success, items, meta } → { items, meta }
+    const body = response.data as Record<string, unknown> | undefined;
+    if (body && typeof body === "object" && body.success === true) {
+      if ("items" in body) {
+        response.data = { items: body.items, meta: body.meta };
+      } else if ("data" in body) {
+        response.data = body.data;
+      }
+    }
+    return response;
+  },
   (error) => {
     if (axios.isAxiosError(error)) {
       const envelope = error.response?.data as
