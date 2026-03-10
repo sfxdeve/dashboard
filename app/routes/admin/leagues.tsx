@@ -120,6 +120,7 @@ export default function LeaguesPage() {
       startersSize: "5",
       budgetPerTeam: "100",
       isMarketEnabled: "true",
+      isOpen: "false",
       entryFeeCredits: "",
       maxMembers: "",
       prize1st: "",
@@ -134,6 +135,7 @@ export default function LeaguesPage() {
         startersSize: Number(value.startersSize),
         budgetPerTeam: Number(value.budgetPerTeam),
         isMarketEnabled: value.isMarketEnabled === "true",
+        isOpen: value.isOpen === "true",
         entryFeeCredits: value.entryFeeCredits
           ? Number(value.entryFeeCredits)
           : undefined,
@@ -164,6 +166,7 @@ export default function LeaguesPage() {
       startersSize: "5",
       budgetPerTeam: "100",
       isMarketEnabled: "true",
+      isOpen: "false",
       entryFeeCredits: "",
       maxMembers: "",
       prize1st: "",
@@ -553,6 +556,34 @@ export default function LeaguesPage() {
                     )}
                   </createForm.Field>
                 </div>
+
+                <createForm.Field name="isOpen">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel>Open for Joining</FieldLabel>
+                      <Select
+                        value={field.state.value}
+                        onValueChange={(v) => field.handleChange(v ?? "false")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status">
+                            {(value) =>
+                              value === "true"
+                                ? "Open"
+                                : value === "false"
+                                  ? "Closed"
+                                  : undefined
+                            }
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="false">Closed</SelectItem>
+                          <SelectItem value="true">Open</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  )}
+                </createForm.Field>
 
                 <createForm.Field name="maxMembers">
                   {(field) => (
